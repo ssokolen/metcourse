@@ -2,3 +2,10 @@
 
 export(rcon)
 export(rmix)
+export(simulate_concave)
+export(simulate_decreasing)
+export(simulate_increasing)
+export(simulate_max)
+export(simulate_rel_change)
+export(simulate_rel_sd)
+export(stretch)

@@ -29,11 +29,11 @@ within given constraints.
 # Using default distributions parameters
 out <- rcon(10000, rnorm, c(-1, 1))
 print(summary(out))
-hist(out)
+hist(out, 20)
 
 # Modifying mean and standard deviation
 out <- rcon(10000, function(n) {rnorm(n, 0.5, 0.5)}, c(-1, 1))
 print(summary(out))
-hist(out)
+hist(out, 20)
 }
 
