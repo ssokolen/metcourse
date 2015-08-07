@@ -2,22 +2,23 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_max}
 \alias{simulate_max}
-\title{Simulating maximum concentrations}
+\title{Simulates Maximum Concentrations}
 \usage{
-simulate_max(n, p, par1, par2, con = NULL)
+simulate_max(n, par1, par2 = NULL, p = 0.5, con = NULL)
 }
 \arguments{
 \item{n}{Number of samples to draw.}
-
-\item{p}{Proportion of samples to draw using \code{par1} vs. \code{par2}.}
 
 \item{par1}{Parameters (mean, sd) in concentration units for first
 distribution. These values are converted to logarithms for
 sampling.}
 
-\item{par2}{Parameters (mean, sd) in concentration units for second
+\item{par2}{Optional parameters (mean, sd) in concentration units for second
 distribution. These values are converted to logarithms for
 sampling.}
+
+\item{p}{Proportion of samples to draw using \code{par1} vs. \code{par2}.
+Note, \code{p} is ignored if \code{par2} is not specified.}
 
 \item{con}{Optional vector of lower and upper constraints on generated
 samples.}
@@ -31,7 +32,7 @@ distributions of concentration logarithms.
 }
 \examples{
 # Generating concentrations
-out <- simulate_max(10000, 0.3, c(7, 2), c(0.5, 2))
+out <- simulate_max(10000, c(7, 2), c(0.5, 2), 0.3)
 
 # Formatting output on logarithmic scale
 out <- log10(out)

@@ -1,10 +1,12 @@
 # Functions for simulating metabolic time-courses.
 
+library(dplyr)
+
 #=========================================================================>
 # Helper functions
 
 #------------------------------------------------------------------------
-#' Constraining random samples 
+#' Constrains Random Samples 
 #'
 #' Resamples supplied distribution to ensure generated values fall
 #' within given constraints.
@@ -61,7 +63,7 @@ rcon <- function(n, rdist, con, max.iter=100) {
 }
 
 #------------------------------------------------------------------------
-#' Mixing random samples 
+#' Mixes Random Samples 
 #'
 #' Generates a random sample by mixing two distributions.
 #
@@ -92,7 +94,7 @@ rmix <- function(n, p, rdist1, rdist2) {
    stop(msg)
   } 
 
-  n1 <- floor(n*p)
+  n1 <- ceiling(n*p)
   n2 <- n - n1
 
   out <- c(rdist1(n1), rdist2(n2))
@@ -102,7 +104,7 @@ rmix <- function(n, p, rdist1, rdist2) {
 }
 
 #------------------------------------------------------------------------
-#' Scaling random samples
+#' Scales Random Samples
 #'
 #' Stretches a vector of values between specified constraints.
 #
@@ -129,19 +131,77 @@ stretch <- function(x, con) {
 # Parameter simulation
 
 #-------------------------------------------------------------------------
-#' Simulating maximum concentrations
+#' Simulate Curve Characteristic
+#'
+#' Underlying function for simulating maximum concentration, relative
+#' changes in concentration and relative standard deviations. Each of these
+#' simulation relies on the mixture of two distributions, with the nature
+#' of the distributions dependent on the characteristic to be simulated.
+#'
+#' @param n Number of samples to draw.
+#' @param dist1 Distribution function for the first distribution e.g. rnorm
+#' @param par1 A list of parameters for the first distribution (to be passed 
+#'        into dist1 using do.call).
+#' @param dist2 Optional distribution function for the second distribution.
+#'              Note, \code{par2} has to be specified if \code{dist2} is 
+#'              specified.
+#' @param par2 An optional list of parameters for the second distribution. 
+#'              Note, \code{dist2} has to be specified if \code{par2} is 
+#'              specified.
+#' @param p Proportion of samples to draw using \code{dist1} vs. \code{dist2}.
+#'          Note, \code{p} is ignored if \code{dist2} or \code{par2} 
+#'          is not specified.
+#' @param con Optional vector of lower and upper constraints on generated 
+#'            samples.
+#
+#' @return A vector of randomly generated values.
+simulate_characteristic <- function(n, dist1, par1, dist2 = NULL, par2 = NULL, 
+                                    p = 0.5, con = NULL) {
+
+  if (xor(is.null(dist2), is.null(par2))) {
+    msg <- 'Either both or none of dist2 and par2 must be specified'
+    stop(msg)
+  }
+
+  if (is.null(dist2)) {
+    rtotal <- function(n) do.call(dist1, c(list(n=n), par1))
+  } else {
+    if ((p < 0) | (p > 1)) {
+      msg <- 'p must be between 0 and 1'
+      stop(msg)
+    } 
+
+    rdist1 <- function(n) do.call(dist1, c(list(n=n), par1))
+    rdist2 <- function(n) do.call(dist2, c(list(n=n), par2))
+    rtotal <- function(n) rmix(n, p, rdist1, rdist2)
+  }
+
+  print(rtotal)
+
+  if (is.null(con)) {
+    out <- rtotal(n)
+  } else {
+    out <- rcon(n, rtotal, con)
+  }
+
+  return(out)
+}
+
+#-------------------------------------------------------------------------
+#' Simulates Maximum Concentrations
 #'
 #' Simulates maximum metabolite concentrations using a mixture of 2 normal 
 #' distributions of concentration logarithms.
 #'
 #' @param n Number of samples to draw.
-#' @param p Proportion of samples to draw using \code{par1} vs. \code{par2}.
 #' @param par1 Parameters (mean, sd) in concentration units for first
 #'             distribution. These values are converted to logarithms for 
 #'             sampling.
-#' @param par2 Parameters (mean, sd) in concentration units for second
+#' @param par2 Optional parameters (mean, sd) in concentration units for second
 #'             distribution. These values are converted to logarithms for 
 #'             sampling.
+#' @param p Proportion of samples to draw using \code{par1} vs. \code{par2}.
+#'          Note, \code{p} is ignored if \code{par2} is not specified.
 #' @param con Optional vector of lower and upper constraints on generated 
 #'            samples.
 #
@@ -149,7 +209,7 @@ stretch <- function(x, con) {
 #'
 #' @examples
 #' # Generating concentrations
-#' out <- simulate_max(10000, 0.3, c(7, 2), c(0.5, 2))
+#' out <- simulate_max(10000, c(7, 2), c(0.5, 2), 0.3)
 #'
 #' # Formatting output on logarithmic scale
 #' out <- log10(out)
@@ -159,79 +219,77 @@ stretch <- function(x, con) {
 #' axis(side = 2)
 #' axis(at = log10(labels), labels = labels, side = 1)
 #' @export
-simulate_max <- function(n, p, par1, par2, con=NULL) {
+simulate_max <- function(n, par1, par2 = NULL, p = 0.5, con = NULL) {
 
-  if ((p < 0) | (p > 1)) {
-   msg <- 'p must be between 0 and 1'
-   stop(msg)
-  } 
+  if (is.null(par2)) {
+    if (par1[2] <= 1) {
+      msg <- 'Log transformation results in negative or zero standard devation'
+      stop(msg)
+    }
 
-  rdist1 <- function(n) rnorm(n, log10(par1[1]), log10(par1[2]))
-  rdist2 <- function(n) rnorm(n, log10(par2[1]), log10(par2[2])) 
+    out <- simulate_characteristic(n, rnorm, as.list(log10(par1)), con=con)
 
-  rtotal <- function(n) rmix(n, p, rdist1, rdist2)
-
-  if (is.null(con)) {
-    out <- rtotal(n)
   } else {
-    out <- rcon(n, rtotal, con)
+    if ((par1[2] <= 1) | par2[2] <= 1) {
+      msg <- 'Log transformation results in negative or zero standard devation'
+      stop(msg)
+    }
+
+    out <- simulate_characteristic(n, rnorm, as.list(log10(par1)), 
+                                      rnorm, as.list(log10(par2)), 
+                                      p, con)
   }
 
   return(10**out)
 }
 
 #-------------------------------------------------------------------------
-#' Simulating concentration changes 
+#' Simulate Concentration Changes 
 #'
 #' Simulates relative (fractional) changes in metabolite concentrations using
 #' a mixture of beta distributions.
 #'
 #' @param n Number of samples to draw.
-#' @param p Proportion of samples to draw using \code{par1} vs. \code{par2}.
 #' @param par1 Parameters (alpha, beta) for first distribution.
-#' @param par2 Parameters (alpha, beta) for second distribution.
+#' @param par2 Optional parameters (alpha, beta) for second distribution.
+#' @param p Proportion of samples to draw using \code{par1} vs. \code{par2}.
+#'          Note, \code{p} is ignored if \code{par2} is not specified.
 #' @param con Optional vector of lower and upper constraints on generated 
 #'            samples.
 #
 #' @return A vector of relative concentration values.
 #'
 #' @examples
-#' out <- simulate_rel_change(10000, 0.7, c(2, 5), c(0.5, 0.5), c(0.1, 1))
+#' out <- simulate_rel_change(10000, c(2, 5), c(0.5, 0.5), 0.7, c(0.1, 1))
 #' hist(out, 20, probability = TRUE, 
 #'      main = '', xlab = 'Fractional change in concentration')
 #' @export
-simulate_rel_change <- function(n, p, par1, par2, con=NULL) {
+simulate_rel_change <- function(n, par1, par2=NULL, p=0.5, con=NULL) {
 
-  if ((p < 0) | (p > 1)) {
-   msg <- 'p must be between 0 and 1'
-   stop(msg)
-  } 
+  if (is.null(par2)) {
+    out <- simulate_characteristic(n, rbeta, as.list(par1), con=con)
 
-  rdist1 <- function(n) rbeta(n, par1[1], par1[2])
-  rdist2 <- function(n) rbeta(n, par2[1], par2[2]) 
-
-  rtotal <- function(n) rmix(n, p, rdist1, rdist2)
-
-  if (is.null(con)) {
-    out <- rtotal(n)
   } else {
-    out <- rcon(n, rtotal, con)
+    out <- simulate_characteristic(n, rbeta, as.list(par1), 
+                                      rbeta, as.list(par2), 
+                                      p, con)
   }
 
   return(out)
 }
 
 #-------------------------------------------------------------------------
-#' Simulating measurement variability 
+#' Simulate Measurement Variability 
 #'
 #' Simulates relative standard deviations (coefficients of variation) using
 #' a mixture of 2 normal distributions (one subpopulation of less variable
 #' measurements and on subpopulation of more variable ones).
 #'
 #' @param n Number of samples to draw.
-#' @param p Proportion of samples to draw using \code{par1} vs. \code{par2}.
 #' @param par1 Parameters (mean, sd) for first distribution.
-#' @param par2 Parameters (mean, sd) for second distribution.
+#' @param par2 Optional parameters (mean, sd) for second distribution.
+#' @param p Proportion of samples to draw using \code{par1} vs. \code{par2}.
+#'          Note, \code{p} is ignored if \code{par2} is not specified.
 #' @param con Optional vector of lower and upper constraints on generated 
 #'            samples. By default, relative standard deviations are limited
 #'            to between 0 and 1.
@@ -239,26 +297,19 @@ simulate_rel_change <- function(n, p, par1, par2, con=NULL) {
 #' @return A vector of relative standard deviation values.
 #'
 #' @examples
-#' out <- simulate_rel_sd(10000, 0.7, c(.04, .02), c(0.11, 0.02), c(0, 0.20))
+#' out <- simulate_rel_sd(10000, c(.04, .02), c(0.11, 0.02), 0.7, c(0, 0.20))
 #' hist(out, 20, probability = TRUE, 
 #'      main = '', xlab = 'Relative standard deviation')
 #' @export
 simulate_rel_sd <- function(n, p, par1, par2, con=c(0,1)) {
 
-  if ((p < 0) | (p > 1)) {
-   msg <- 'p must be between 0 and 1'
-   stop(msg)
-  } 
+  if (is.null(par2)) {
+    out <- simulate_characteristic(n, rnorm, as.list(par1), con=con)
 
-  rdist1 <- function(n) rnorm(n, par1[1], par1[2])
-  rdist2 <- function(n) rnorm(n, par2[1], par2[2]) 
-
-  rtotal <- function(n) rmix(n, p, rdist1, rdist2)
-
-  if (is.null(con)) {
-    out <- rtotal(n)
   } else {
-    out <- rcon(n, rtotal, con)
+    out <- simulate_characteristic(n, rnorm, as.list(par1), 
+                                      rnorm, as.list(par2), 
+                                      p, con)
   }
 
   return(out)
@@ -268,7 +319,7 @@ simulate_rel_sd <- function(n, p, par1, par2, con=c(0,1)) {
 # Trend simulation
 
 #-------------------------------------------------------------------------
-#' Simulating decreasing trends
+#' Simulate Decreasing Trends
 #'
 #' Simulates decreasing trends by mixing two sigmoid curve families. Sigmoid
 #' parameters are sampled from uniform distributions with boundaries provided
@@ -337,7 +388,7 @@ simulate_decreasing <- function(n, n.samples, p, par1, par2) {
 }
 
 #-------------------------------------------------------------------------
-#' Simulating increasing trends
+#' Simulate Increasing Trends
 #'
 #' Simulates increasing trends by mixing two sigmoid curve families. Sigmoid
 #' parameters are sampled from uniform distributions with boundaries provided
@@ -406,7 +457,7 @@ simulate_increasing <- function(n, n.samples, p, par1, par2) {
 }
 
 #-------------------------------------------------------------------------
-#' Simulating concave trends
+#' Simulate Concave Trends
 #'
 #' Simulates concave trends by mixing trimmed and scaled beta distributions. 
 #' parameters are sampled from uniform distributions with boundaries provided
@@ -490,7 +541,7 @@ simulate_concave <- function(n, n.samples, p, par1, par2) {
 } 
 
 #-------------------------------------------------------------------------
-#' Simulating linear trends
+#' Simulate Linear Trends
 #'
 #' Simulates linear trends with p fraction decreasing and (1-p) fraction
 #' increasing.
@@ -532,6 +583,5 @@ simulate_linear <- function(n, n.samples, p) {
 
   return(as.data.frame(out))
 } 
-
 
 

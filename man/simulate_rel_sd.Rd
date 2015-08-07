@@ -2,18 +2,19 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_rel_sd}
 \alias{simulate_rel_sd}
-\title{Simulating measurement variability}
+\title{Simulate Measurement Variability}
 \usage{
 simulate_rel_sd(n, p, par1, par2, con = c(0, 1))
 }
 \arguments{
 \item{n}{Number of samples to draw.}
 
-\item{p}{Proportion of samples to draw using \code{par1} vs. \code{par2}.}
+\item{p}{Proportion of samples to draw using \code{par1} vs. \code{par2}.
+Note, \code{p} is ignored if \code{par2} is not specified.}
 
 \item{par1}{Parameters (mean, sd) for first distribution.}
 
-\item{par2}{Parameters (mean, sd) for second distribution.}
+\item{par2}{Optional parameters (mean, sd) for second distribution.}
 
 \item{con}{Optional vector of lower and upper constraints on generated
 samples. By default, relative standard deviations are limited
@@ -28,7 +29,7 @@ a mixture of 2 normal distributions (one subpopulation of less variable
 measurements and on subpopulation of more variable ones).
 }
 \examples{
-out <- simulate_rel_sd(10000, 0.7, c(.04, .02), c(0.11, 0.02), c(0, 0.20))
+out <- simulate_rel_sd(10000, c(.04, .02), c(0.11, 0.02), 0.7, c(0, 0.20))
 hist(out, 20, probability = TRUE,
      main = '', xlab = 'Relative standard deviation')
 }
