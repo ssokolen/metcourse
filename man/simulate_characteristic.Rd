@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_characteristic}
 \alias{simulate_characteristic}
-\title{Simulate Curve Characteristic}
+\title{Simulate Time-course Characteristic}
 \usage{
 simulate_characteristic(n, dist1, par1, dist2 = NULL, par2 = NULL,
   p = 0.5, con = NULL)
@@ -35,8 +35,7 @@ A vector of randomly generated values.
 }
 \description{
 Underlying function for simulating maximum concentration, relative
-changes in concentration and relative standard deviations. Each of these
-simulation relies on the mixture of two distributions, with the nature
-of the distributions dependent on the characteristic to be simulated.
+changes in concentration and relative standard deviations. Each simulation
+can be performed with one or a mixture of two underlying distributions.
 }
 

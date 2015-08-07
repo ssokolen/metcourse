@@ -131,12 +131,11 @@ stretch <- function(x, con) {
 # Parameter simulation
 
 #-------------------------------------------------------------------------
-#' Simulate Curve Characteristic
+#' Simulate Time-course Characteristic
 #'
 #' Underlying function for simulating maximum concentration, relative
-#' changes in concentration and relative standard deviations. Each of these
-#' simulation relies on the mixture of two distributions, with the nature
-#' of the distributions dependent on the characteristic to be simulated.
+#' changes in concentration and relative standard deviations. Each simulation
+#' can be performed with one or a mixture of two underlying distributions.
 #'
 #' @param n Number of samples to draw.
 #' @param dist1 Distribution function for the first distribution e.g. rnorm
@@ -319,19 +318,93 @@ simulate_rel_sd <- function(n, p, par1, par2, con=c(0,1)) {
 # Trend simulation
 
 #-------------------------------------------------------------------------
+#' Simulate Trends
+#'
+#' Underlying function for simulating different types of time-course trends.
+#' Each trend supports parameter generation from one or two sets of parameter
+#' limits.
+#'
+#' @param n Number of trends to generate.
+#' @param n.samples Number of timepoints within each trend.
+#' @param f_trend Function that taxes x values and a vector of parameters
+#'                and generates a corresponding set of y values.
+#' @param par1 Parameter vector of lower and upper bounds for first set of 
+#'        trends.
+#' @param par2 Optional parameter vector of lower and upper bounds for second 
+#'        set of trends.
+#' @param p Proportion of trends to generate using \code{par1} vs. \code{par2}.
+#'          Note, \code{p} is ignored if \code{par2} is not specified.
+#
+#' @return A dataframe with each row representing a metabolite concentration
+#'         time-course scaled between 0 and 1. The corresponding x variables 
+#'         are assumed to be equally spaced between 0 and 1 i.e. 
+#'         x <- seq(0, 1, length.out=n.samples).    
+#'
+simulate_trend <- function(n, n.samples, f_trend, par1, par2 = NULL, p = 0.5) {
+
+  if (is.null(par2)) {
+    n1 <- n
+    n2 <- 0
+  } else {
+    if ((p < 0) | (p > 1)) {
+      msg <- 'p must be between 0 and 1'
+      stop(msg)
+    } 
+
+    n1 <- floor(n*p)
+    n2 <- n - n1
+  }
+
+  # Initializing parameter matrix
+  n.par <- length(par1)
+  par <- matrix(NA, nrow=n, ncol=n.par/2)
+
+  # Generating trends from first set of parameters
+  if (n1 != 0) {
+    for (i in seq(1, n.par, by=2)) {
+      par[1:n1, (i+1)/2] <- runif(n1, par1[i], par1[i+1])
+    }
+  }
+
+  # Generating trends from second set of parameters
+  if (n2 != 0) {
+    for (i in seq(1, n.par, by=2)) {
+      par[(n1+1):n, (i+1)/2] <- runif(n2, par2[i], par2[i+1])
+    }
+  }
+
+  # Shuffling order
+  par <- par[sample(1:n), ]
+
+  # Defining x variables
+  x <- seq(0, 1, length.out=n.samples)
+
+  # Applying f_trend on every set of parameters
+  out <- apply(par, 1, function(par) f_trend(x, par))
+
+  # Taking the transpose to get samples as columns
+  out <- t(out)
+
+  return(as.data.frame(out))
+}
+
+#-------------------------------------------------------------------------
 #' Simulate Decreasing Trends
 #'
 #' Simulates decreasing trends by mixing two sigmoid curve families. Sigmoid
 #' parameters are sampled from uniform distributions with boundaries provided
-#' as input to this function.
+#' as input to this function. Function: y = (1 + exp((x-a)/b))**(-1).
+#'
+#' 
 #'
 #' @param n Number of trends to generate.
 #' @param n.samples Number of timepoints within each trend.
+#' @param par1 Parameter vector (a_min, a_max, b_min, b_max) for first set of 
+#'        trends
+#' @param par2 Optional parameter vector (a_min, a_max, b_min, b_max) for second 
+#'        set of trends
 #' @param p Proportion of trends to generate using \code{par1} vs. \code{par2}.
-#' @param par1 Parameter vector (a_min, a_max, b_min, b_max) for one set of 
-#'        trends where y = (1 + exp((x-a)/b))**(-1)
-#' @param par2 Parameter vector (a_min, a_max, b_min, b_max) for second set of 
-#'        trends where y = (1 + exp((x-a)/b))**(-1)
+#'        Note, \code{p} is ignored if \code{par2} is not specified.
 #
 #' @return A dataframe with each row representing a metabolite concentration
 #'         time-course scaled between 0 and 1. The corresponding x variables 
@@ -341,7 +414,7 @@ simulate_rel_sd <- function(n, p, par1, par2, con=c(0,1)) {
 #' @examples
 #' par1 <- c(0.2, 0.6, 0.10, 0.18)
 #' par2 <- c(0.6, 0.9, 0.10, 0.18)
-#' trends <- simulate_decreasing(1000, 100, 0.05, par1, par2)
+#' trends <- simulate_decreasing(1000, 100, par1, par2, 0.05)
 #'
 #' # Conversion for plotting
 #' y_mat <- t(as.matrix(trends))
@@ -349,42 +422,18 @@ simulate_rel_sd <- function(n, p, par1, par2, con=c(0,1)) {
 #' matplot(x, y_mat, type = 'l', lty = 1, lwd = 4, col = grey(0, 0.05),
 #'         xlab = 'Relative culturing time', ylab = 'Relative concentration')
 #' @export
-simulate_decreasing <- function(n, n.samples, p, par1, par2) {
-
-  if ((p < 0) | (p > 1)) {
-   msg <- 'p must be between 0 and 1'
-   stop(msg)
-  } 
-
-  out <- matrix(NA, nrow=n, ncol=n.samples)
-
-  n1 <- floor(n*p)
-  n2 <- n - n1
-
-  index <- sample(1:n)
-  index1 <- index[1:n1]
-  index2 <- index[(n1 + 1):n]
-
-  # Generating different sets of parameters
-  par <- matrix(NA, nrow=n, ncol=2)
-  par[index1, ] <- cbind(runif(n1, par1[1], par1[2]),
-                         runif(n1, par1[3], par1[4]))  
-  par[index2, ] <- cbind(runif(n2, par2[1], par2[2]),
-                         runif(n2, par2[3], par2[4]))  
+simulate_decreasing <- function(n, n.samples, par1, par2 = NULL, p = 0.5) {
 
   # Defining function
-  x <- seq(0, 1, length.out=n.samples)
-  f_dec <- function(par) {
-    y <- (1 + exp((x-par[1])/par[2]))**(-1)
-    return(stretch(y, c(0, 1)))
+  f_dec <- function(x, par) {
+    y <- (1 + exp((x - par[1]) / par[2]))**(-1)
+    out <- stretch(y, c(0, 1))
+    return(out)
   }
 
-  # Generating output
-  for (i in 1:n) {
-    out[i, ] <- f_dec(par[i, ])
-  }
+  out <- simulate_trend(n, n.samples, f_dec, par1, par2, p)
 
-  return(as.data.frame(out))
+  return(out)
 }
 
 #-------------------------------------------------------------------------
@@ -392,15 +441,16 @@ simulate_decreasing <- function(n, n.samples, p, par1, par2) {
 #'
 #' Simulates increasing trends by mixing two sigmoid curve families. Sigmoid
 #' parameters are sampled from uniform distributions with boundaries provided
-#' as input to this function.
+#' as input to this function. Function: y = 1 - (1 + exp((x-a)/b))**(-1).
 #'
 #' @param n Number of trends to generate.
 #' @param n.samples Number of timepoints within each trend.
+#' @param par1 Parameter vector (a_min, a_max, b_min, b_max) for first set of 
+#'        trends
+#' @param par2 Optional parameter vector (a_min, a_max, b_min, b_max) for second 
+#'        set of trends
 #' @param p Proportion of trends to generate using \code{par1} vs. \code{par2}.
-#' @param par1 Parameter vector (a_min, a_max, b_min, b_max) for one set of 
-#'        trends where y = 1 - (1 + exp((x-a)/b))**(-1)
-#' @param par2 Parameter vector (a_min, a_max, b_min, b_max) for second set of 
-#'        trends where y = 1 - (1 + exp((x-a)/b))**(-1)
+#'        Note, \code{p} is ignored if \code{par2} is not specified.
 #
 #' @return A dataframe with each row representing a metabolite concentration
 #'         time-course scaled between 0 and 1. The corresponding x variables 
@@ -410,7 +460,7 @@ simulate_decreasing <- function(n, n.samples, p, par1, par2) {
 #' @examples
 #' par1 <- c(0.045, 0.055, 0.2, 0.4)
 #' par2 <- c(0.945, 0.955, 0.1, 0.3)
-#' trends <- simulate_increasing(1000, 100, 0.15, par1, par2)
+#' trends <- simulate_increasing(1000, 100, par1, par2, 0.15)
 #'
 #' # Conversion for plotting
 #' y_mat <- t(as.matrix(trends))
@@ -418,42 +468,18 @@ simulate_decreasing <- function(n, n.samples, p, par1, par2) {
 #' matplot(x, y_mat, type = 'l', lty = 1, lwd = 4, col = grey(0, 0.05),
 #'         xlab = 'Relative culturing time', ylab = 'Relative concentration')
 #' @export
-simulate_increasing <- function(n, n.samples, p, par1, par2) {
-
-  if ((p < 0) | (p > 1)) {
-   msg <- 'p must be between 0 and 1'
-   stop(msg)
-  } 
-
-  out <- matrix(NA, nrow=n, ncol=n.samples)
-
-  n1 <- floor(n*p)
-  n2 <- n - n1
-
-  index <- sample(1:n)
-  index1 <- index[1:n1]
-  index2 <- index[(n1 + 1):n]
-
-  # Generating different sets of parameters
-  par <- matrix(NA, nrow=n, ncol=2)
-  par[index1, ] <- cbind(runif(n1, par1[1], par1[2]),
-                         runif(n1, par1[3], par1[4]))  
-  par[index2, ] <- cbind(runif(n2, par2[1], par2[2]),
-                         runif(n2, par2[3], par2[4]))  
+simulate_increasing <- function(n, n.samples, par1, par2 = NULL, p = 0.5) {
 
   # Defining function
-  x <- seq(0, 1, length.out=n.samples)
-  f_inc <- function(par) {
-    y <- 1 - (1 + exp((x-par[1])/par[2]))**(-1)
-    return(stretch(y, c(0, 1)))
+  f_inc <- function(x, par) {
+    y <- 1 - (1 + exp((x - par[1]) / par[2]))**(-1)
+    out <- stretch(y, c(0, 1))
+    return(out)
   }
 
-  # Generating output
-  for (i in 1:n) {
-    out[i, ] <- f_inc(par[i, ])
-  }
+  out <- simulate_trend(n, n.samples, f_inc, par1, par2, p)
 
-  return(as.data.frame(out))
+  return(out)
 }
 
 #-------------------------------------------------------------------------
@@ -461,17 +487,18 @@ simulate_increasing <- function(n, n.samples, p, par1, par2) {
 #'
 #' Simulates concave trends by mixing trimmed and scaled beta distributions. 
 #' parameters are sampled from uniform distributions with boundaries provided
-#' as input to this function.
+#' as input to this function. Function y = x**(a-1)*(1-x)**(b-1), with the
+#' domain trimmed such that min(x) = c and max(x) = d (before rescaling 
+#' to [0, 1])
 #'
 #' @param n Number of trends to generate.
 #' @param n.samples Number of timepoints within each trend.
+#' @param par1 Parameter vector (a_min, a_max, b_min, b_max) for first set of 
+#'        trends
+#' @param par2 Optional parameter vector (a_min, a_max, b_min, b_max) for second 
+#'        set of trends
 #' @param p Proportion of trends to generate using \code{par1} vs. \code{par2}.
-#' @param par1 Parameter vector (a_min, a_max, b_min, b_max, c_min, c_max, 
-#'        d_min, d_max) for one set of trends where y = x**(a-1)*(1-x)**(b-1)
-#'        constrained to min(x) = c, max(x) = d
-#' @param par2 Parameter vector (a_min, a_max, b_min, b_max, c_min, c_max, 
-#'        d_min, d_max) for one set of trends where y = x**(a-1)*(1-x)**(b-1)
-#'        constrained to min(x) = c, max(x) = d
+#'        Note, \code{p} is ignored if \code{par2} is not specified.
 #
 #' @return A dataframe with each row representing a metabolite concentration
 #'         time-course scaled between 0 and 1. The corresponding x variables 
@@ -481,7 +508,7 @@ simulate_increasing <- function(n, n.samples, p, par1, par2) {
 #' @examples
 #' par1 <- c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9)
 #' par2 <- c(3.5, 4.5, 2.5, 3.5, 0.2, 0.4, 0.7, 0.8)
-#' trends <- simulate_concave(1000, 100, 0.75, par1, par2)
+#' trends <- simulate_concave(1000, 100, par1, par2, 0.75)
 #'
 #' # Conversion for plotting
 #' y_mat <- t(as.matrix(trends))
@@ -489,55 +516,34 @@ simulate_increasing <- function(n, n.samples, p, par1, par2) {
 #' matplot(x, y_mat, type = 'l', lty = 1, lwd = 4, col = grey(0, 0.05),
 #'         xlab = 'Relative culturing time', ylab = 'Relative concentration')
 #' @export
-simulate_concave <- function(n, n.samples, p, par1, par2) {
-
-  if ((p < 0) | (p > 1)) {
-   msg <- 'p must be between 0 and 1'
-   stop(msg)
-  } 
-
-  out <- matrix(NA, nrow=n, ncol=n.samples)
-
-  n1 <- floor(n*p)
-  n2 <- n - n1
-
-  index <- sample(1:n)
-  index1 <- index[1:n1]
-  index2 <- index[(n1 + 1):n]
-
-  # Generating different sets of parameters
-  par <- matrix(NA, nrow=n, ncol=4)
-  par[index1, ] <- cbind(runif(n1, par1[1], par1[2]),
-                         runif(n1, par1[3], par1[4]), 
-                         runif(n1, par1[5], par1[6]),
-                         runif(n1, par1[7], par1[8]))
-  par[index2, ] <- cbind(runif(n2, par2[1], par2[2]),
-                         runif(n2, par2[3], par2[4]),  
-                         runif(n2, par2[5], par2[6]),
-                         runif(n2, par2[7], par2[8]))
+simulate_concave <- function(n, n.samples, par1, par2 = NULL, p = 0.5) {
 
   # Defining function
-  x.ini <- seq(0, 1, length.out=n.samples*100)
-  x.fin <- seq(0, 1, length.out=n.samples)
+  f_conc <- function(x, par) {
 
-  f_cnc <- function(par) {
-    y <- x.ini**(par[1]-1)*(1-x.ini)**(par[2]-1)
+    # Sampling at higher density to avoid problems with trimming later
+    x.temp <- seq(min(x), max(x), length.out=length(x)*10)
+    y <- x.temp**(par[1] - 1) * (1 - x.temp)**(par[2] - 1)
 
-    logic <- (x.ini > par[3]) & (x.ini < par[4])
+    # Trimming sections of the curve as specified
+    logic <- (x.temp > par[3]) & (x.temp < par[4])
     y <- y[logic]
-    x <- x.ini[logic]
+    x.temp <- x.temp[logic]
 
-    f_spline <- splinefun(stretch(x, c(0,1)), stretch(y, c(0,1)))
-    out <- f_spline(x=x.fin)
+    # Rescaling to [0, 1]
+    y <- stretch(y, c(0, 1))
+    x.temp <- stretch(x.temp, c(0, 1))
+
+    f_spline <- splinefun(x.temp, y)
+
+    # Generating y values at initially desired x
+    out <- f_spline(x)
     return(out)
   }
 
-  # Generating output
-  for (i in 1:n) {
-    out[i, ] <- f_cnc(par[i, ])
-  }
+  out <- simulate_trend(n, n.samples, f_conc, par1, par2, p)
 
-  return(as.data.frame(out))
+  return(out)
 } 
 
 #-------------------------------------------------------------------------

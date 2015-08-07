@@ -4,22 +4,21 @@
 \alias{simulate_concave}
 \title{Simulate Concave Trends}
 \usage{
-simulate_concave(n, n.samples, p, par1, par2)
+simulate_concave(n, n.samples, par1, par2 = NULL, p = 0.5)
 }
 \arguments{
 \item{n}{Number of trends to generate.}
 
 \item{n.samples}{Number of timepoints within each trend.}
 
-\item{p}{Proportion of trends to generate using \code{par1} vs. \code{par2}.}
+\item{par1}{Parameter vector (a_min, a_max, b_min, b_max) for first set of
+trends}
 
-\item{par1}{Parameter vector (a_min, a_max, b_min, b_max, c_min, c_max,
-d_min, d_max) for one set of trends where y = x**(a-1)*(1-x)**(b-1)
-constrained to min(x) = c, max(x) = d}
+\item{par2}{Optional parameter vector (a_min, a_max, b_min, b_max) for second
+set of trends}
 
-\item{par2}{Parameter vector (a_min, a_max, b_min, b_max, c_min, c_max,
-d_min, d_max) for one set of trends where y = x**(a-1)*(1-x)**(b-1)
-constrained to min(x) = c, max(x) = d}
+\item{p}{Proportion of trends to generate using \code{par1} vs. \code{par2}.
+Note, \code{p} is ignored if \code{par2} is not specified.}
 }
 \value{
 A dataframe with each row representing a metabolite concentration
@@ -30,12 +29,14 @@ A dataframe with each row representing a metabolite concentration
 \description{
 Simulates concave trends by mixing trimmed and scaled beta distributions.
 parameters are sampled from uniform distributions with boundaries provided
-as input to this function.
+as input to this function. Function y = x**(a-1)*(1-x)**(b-1), with the
+domain trimmed such that min(x) = c and max(x) = d (before rescaling
+to [0, 1])
 }
 \examples{
 par1 <- c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9)
 par2 <- c(3.5, 4.5, 2.5, 3.5, 0.2, 0.4, 0.7, 0.8)
-trends <- simulate_concave(1000, 100, 0.75, par1, par2)
+trends <- simulate_concave(1000, 100, par1, par2, 0.75)
 
 # Conversion for plotting
 y_mat <- t(as.matrix(trends))

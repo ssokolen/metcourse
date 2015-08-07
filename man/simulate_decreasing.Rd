@@ -4,20 +4,21 @@
 \alias{simulate_decreasing}
 \title{Simulate Decreasing Trends}
 \usage{
-simulate_decreasing(n, n.samples, p, par1, par2)
+simulate_decreasing(n, n.samples, par1, par2 = NULL, p = 0.5)
 }
 \arguments{
 \item{n}{Number of trends to generate.}
 
 \item{n.samples}{Number of timepoints within each trend.}
 
-\item{p}{Proportion of trends to generate using \code{par1} vs. \code{par2}.}
+\item{par1}{Parameter vector (a_min, a_max, b_min, b_max) for first set of
+trends}
 
-\item{par1}{Parameter vector (a_min, a_max, b_min, b_max) for one set of
-trends where y = (1 + exp((x-a)/b))**(-1)}
+\item{par2}{Optional parameter vector (a_min, a_max, b_min, b_max) for second
+set of trends}
 
-\item{par2}{Parameter vector (a_min, a_max, b_min, b_max) for second set of
-trends where y = (1 + exp((x-a)/b))**(-1)}
+\item{p}{Proportion of trends to generate using \code{par1} vs. \code{par2}.
+Note, \code{p} is ignored if \code{par2} is not specified.}
 }
 \value{
 A dataframe with each row representing a metabolite concentration
@@ -28,12 +29,12 @@ A dataframe with each row representing a metabolite concentration
 \description{
 Simulates decreasing trends by mixing two sigmoid curve families. Sigmoid
 parameters are sampled from uniform distributions with boundaries provided
-as input to this function.
+as input to this function. Function: y = (1 + exp((x-a)/b))**(-1).
 }
 \examples{
 par1 <- c(0.2, 0.6, 0.10, 0.18)
 par2 <- c(0.6, 0.9, 0.10, 0.18)
-trends <- simulate_decreasing(1000, 100, 0.05, par1, par2)
+trends <- simulate_decreasing(1000, 100, par1, par2, 0.05)
 
 # Conversion for plotting
 y_mat <- t(as.matrix(trends))
