@@ -20,15 +20,17 @@
 #'         and the the maximum is smaller than or equal to \code{con[2]}.
 #'
 #' @examples
-#' # Using default distributions parameters
+#' # Using default distribution parameters
 #' out <- rcon(10000, rnorm, c(-1, 1))
 #' print(summary(out))
-#' hist(out, 20)
+#' hist(out, 20, xlim=c(-2, 2), probability=TRUE, 
+#'      main='', xlab='Random variable value')
 #'
 #' # Modifying mean and standard deviation
 #' out <- rcon(10000, function(n) {rnorm(n, 0.5, 0.5)}, c(-1, 1))
 #' print(summary(out))
-#' hist(out, 20)
+#' hist(out, 20, xlim = c(-2, 2), probability = TRUE, 
+#'      main = '', xlab = 'Random variable value')
 #' @export
 rcon <- function(n, rdist, con, max.iter=100) {
 
@@ -80,7 +82,8 @@ rcon <- function(n, rdist, con, max.iter=100) {
 #' rdist2 <- function(n) {rnorm(n,  1, 0.5)}
 #' out <- rmix(10000, 0.3, rdist1, rdist2)
 #' print(summary(out))
-#' hist(out, 20)
+#' hist(out, 20, xlim = c(-2, 2), probability = TRUE, 
+#'      main = '', xlab = 'Random variable value')
 #' @export
 rmix <- function(n, p, rdist1, rdist2) {
 
@@ -112,7 +115,8 @@ rmix <- function(n, p, rdist1, rdist2) {
 #' @examples
 #' out <- stretch(rnorm(10000), c(-2, 1))
 #' print(summary(out))
-#' hist(out, 20, xlim = c(-2,2))
+#' hist(out, 20, xlim=c(-2, 2), probability=TRUE, 
+#'      main = '', xlab = 'Random variable value')
 #' @export
 #-------------------------------------------------------------------------
 stretch <- function(x, con) {
@@ -150,7 +154,8 @@ stretch <- function(x, con) {
 #' # Formatting output on logarithmic scale
 #' out <- log10(out)
 #' labels <- c(0.1, 0.25, 0.5, 1, 2.5, 5, 10, 25, 50)
-#' hist(out, 20, axes = FALSE)
+#' hist(out, 20, axes = FALSE, probability = TRUE, 
+#'      main = '', xlab = 'Maximum metabolite concentration')
 #' axis(side = 2)
 #' axis(at = log10(labels), labels = labels, side = 1)
 #' @export
@@ -192,7 +197,8 @@ simulate_max <- function(n, p, par1, par2, con=NULL) {
 #'
 #' @examples
 #' out <- simulate_rel_change(10000, 0.7, c(2, 5), c(0.5, 0.5), c(0.1, 1))
-#' hist(out, 20)
+#' hist(out, 20, probability = TRUE, 
+#'      main = '', xlab = 'Fractional change in concentration')
 #' @export
 simulate_rel_change <- function(n, p, par1, par2, con=NULL) {
 
@@ -234,7 +240,8 @@ simulate_rel_change <- function(n, p, par1, par2, con=NULL) {
 #'
 #' @examples
 #' out <- simulate_rel_sd(10000, 0.7, c(.04, .02), c(0.11, 0.02), c(0, 0.20))
-#' hist(out, 20)
+#' hist(out, 20, probability = TRUE, 
+#'      main = '', xlab = 'Relative standard deviation')
 #' @export
 simulate_rel_sd <- function(n, p, par1, par2, con=c(0,1)) {
 
@@ -288,7 +295,8 @@ simulate_rel_sd <- function(n, p, par1, par2, con=c(0,1)) {
 #' # Conversion for plotting
 #' y_mat <- t(as.matrix(trends))
 #' x <- seq(0, 1, length.out=100)
-#' matplot(x, y_mat, type='l', lty=1, lwd=4, col=grey(0, 0.05))
+#' matplot(x, y_mat, type = 'l', lty = 1, lwd = 4, col = grey(0, 0.05),
+#'         xlab = 'Relative culturing time', ylab = 'Relative concentration')
 #' @export
 simulate_decreasing <- function(n, n.samples, p, par1, par2) {
 
@@ -356,7 +364,8 @@ simulate_decreasing <- function(n, n.samples, p, par1, par2) {
 #' # Conversion for plotting
 #' y_mat <- t(as.matrix(trends))
 #' x <- seq(0, 1, length.out=100)
-#' matplot(x, y_mat, type='l', lty=1, lwd=4, col=grey(0, 0.05))
+#' matplot(x, y_mat, type = 'l', lty = 1, lwd = 4, col = grey(0, 0.05),
+#'         xlab = 'Relative culturing time', ylab = 'Relative concentration')
 #' @export
 simulate_increasing <- function(n, n.samples, p, par1, par2) {
 
@@ -426,7 +435,8 @@ simulate_increasing <- function(n, n.samples, p, par1, par2) {
 #' # Conversion for plotting
 #' y_mat <- t(as.matrix(trends))
 #' x <- seq(0, 1, length.out=100)
-#' matplot(x, y_mat, type='l', lty=1, lwd=4, col=grey(0, 0.05))
+#' matplot(x, y_mat, type = 'l', lty = 1, lwd = 4, col = grey(0, 0.05),
+#'         xlab = 'Relative culturing time', ylab = 'Relative concentration')
 #' @export
 simulate_concave <- function(n, n.samples, p, par1, par2) {
 
@@ -487,13 +497,7 @@ simulate_concave <- function(n, n.samples, p, par1, par2) {
 #'
 #' @param n Number of trends to generate.
 #' @param n.samples Number of timepoints within each trend.
-#' @param p Proportion of trends to generate using \code{par1} vs. \code{par2}.
-#' @param par1 Parameter vector (a_min, a_max, b_min, b_max, c_min, c_max, 
-#'        d_min, d_max) for one set of trends where y = x**(a-1)*(1-x)**(b-1)
-#'        constrained to min(x) = c, max(x) = d
-#' @param par2 Parameter vector (a_min, a_max, b_min, b_max, c_min, c_max, 
-#'        d_min, d_max) for one set of trends where y = x**(a-1)*(1-x)**(b-1)
-#'        constrained to min(x) = c, max(x) = d
+#' @param p Proportion of trends decreasing (vs. increasing).
 #
 #' @return A dataframe with each row representing a metabolite concentration
 #'         time-course scaled between 0 and 1. The corresponding x variables 
@@ -501,29 +505,17 @@ simulate_concave <- function(n, n.samples, p, par1, par2) {
 #'         x <- seq(0, 1, length.out=n.samples).    
 #'
 #' @examples
-#' par1 <- c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9)
-#' par2 <- c(3.5, 4.5, 2.5, 3.5, 0.2, 0.4, 0.7, 0.8)
-#' trends <- simulate_concave(1000, 100, 0.75, par1, par2)
+#' trends <- simulate_linear(1000, 100, 0.75)
 #'
 #' # Conversion for plotting
 #' y_mat <- t(as.matrix(trends))
 #' x <- seq(0, 1, length.out=100)
-#' matplot(x, y_mat, type='l', lty=1, lwd=4, col=grey(0, 0.05))
+#' matplot(x, y_mat, type = 'l', lty = 1, lwd = 4, col = grey(0, 0.05),
+#'         xlab = 'Relative culturing time', ylab = 'Relative concentration')
 #' @export
 simulate_linear <- function(n, n.samples, p) {
-  # Simulates linear trends with p fraction decreasing and (1-p) fraction
-  # increasing.
-  #
-  # Parameters
-  # ----------
-  # n: integer
-  #   Number of trends to generate 
-  # n.samples: integer
-  #   Number of timepoints within each trend
-  # p: numeric
-  #   Fraction of trends decreasing
 
-  n1 <- ceiling(p*n)
+  n1 <- floor(n*p)
   n2 <- n - n1
 
   # Defining function
@@ -536,7 +528,10 @@ simulate_linear <- function(n, n.samples, p) {
   out2 <- matrix(rep(y2, each=n2), nrow=n2, ncol=n.samples)
 
   out <- rbind(out1, out2)
+  out <- out[sample(1:n), ]
 
-  return(as.data.frame(out[sample(1:n), ]))
+  return(as.data.frame(out))
 } 
+
+
 

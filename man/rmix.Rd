@@ -31,6 +31,7 @@ rdist1 <- function(n) {rnorm(n, -1, 0.5)}
 rdist2 <- function(n) {rnorm(n,  1, 0.5)}
 out <- rmix(10000, 0.3, rdist1, rdist2)
 print(summary(out))
-hist(out, 20)
+hist(out, 20, xlim = c(-2, 2), probability = TRUE,
+     main = '', xlab = 'Random variable value')
 }
 

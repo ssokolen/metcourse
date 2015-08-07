@@ -26,14 +26,16 @@ Resamples supplied distribution to ensure generated values fall
 within given constraints.
 }
 \examples{
-# Using default distributions parameters
+# Using default distribution parameters
 out <- rcon(10000, rnorm, c(-1, 1))
 print(summary(out))
-hist(out, 20)
+hist(out, 20, xlim=c(-2, 2), probability=TRUE,
+     main='', xlab='Random variable value')
 
 # Modifying mean and standard deviation
 out <- rcon(10000, function(n) {rnorm(n, 0.5, 0.5)}, c(-1, 1))
 print(summary(out))
-hist(out, 20)
+hist(out, 20, xlim = c(-2, 2), probability = TRUE,
+     main = '', xlab = 'Random variable value')
 }
 

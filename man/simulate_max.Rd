@@ -36,7 +36,8 @@ out <- simulate_max(10000, 0.3, c(7, 2), c(0.5, 2))
 # Formatting output on logarithmic scale
 out <- log10(out)
 labels <- c(0.1, 0.25, 0.5, 1, 2.5, 5, 10, 25, 50)
-hist(out, 20, axes = FALSE)
+hist(out, 20, axes = FALSE, probability = TRUE,
+     main = '', xlab = 'Maximum metabolite concentration')
 axis(side = 2)
 axis(at = log10(labels), labels = labels, side = 1)
 }

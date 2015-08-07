@@ -29,6 +29,7 @@ measurements and on subpopulation of more variable ones).
 }
 \examples{
 out <- simulate_rel_sd(10000, 0.7, c(.04, .02), c(0.11, 0.02), c(0, 0.20))
-hist(out, 20)
+hist(out, 20, probability = TRUE,
+     main = '', xlab = 'Relative standard deviation')
 }
 

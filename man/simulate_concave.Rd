@@ -34,12 +34,13 @@ as input to this function.
 }
 \examples{
 par1 <- c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9)
-par2 <- c(3.5, 4.5, 2.5, 3.5, 0.2, 0.4, 0.7, 0.9)
+par2 <- c(3.5, 4.5, 2.5, 3.5, 0.2, 0.4, 0.7, 0.8)
 trends <- simulate_concave(1000, 100, 0.75, par1, par2)
 
 # Conversion for plotting
 y_mat <- t(as.matrix(trends))
 x <- seq(0, 1, length.out=100)
-matplot(x, y_mat, type='l', lty=1, lwd=4, col=grey(0, 0.05))
+matplot(x, y_mat, type = 'l', lty = 1, lwd = 4, col = grey(0, 0.05),
+        xlab = 'Relative culturing time', ylab = 'Relative concentration')
 }
 

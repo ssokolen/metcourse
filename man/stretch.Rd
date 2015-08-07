@@ -21,6 +21,7 @@ Stretches a vector of values between specified constraints.
 \examples{
 out <- stretch(rnorm(10000), c(-2, 1))
 print(summary(out))
-hist(out, 20, xlim = c(-2,2))
+hist(out, 20, xlim=c(-2, 2), probability=TRUE,
+     main = '', xlab = 'Random variable value')
 }
 

@@ -38,6 +38,7 @@ trends <- simulate_increasing(1000, 100, 0.15, par1, par2)
 # Conversion for plotting
 y_mat <- t(as.matrix(trends))
 x <- seq(0, 1, length.out=100)
-matplot(x, y_mat, type='l', lty=1, lwd=4, col=grey(0, 0.05))
+matplot(x, y_mat, type = 'l', lty = 1, lwd = 4, col = grey(0, 0.05),
+        xlab = 'Relative culturing time', ylab = 'Relative concentration')
 }
 

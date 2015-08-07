@@ -27,6 +27,7 @@ a mixture of beta distributions.
 }
 \examples{
 out <- simulate_rel_change(10000, 0.7, c(2, 5), c(0.5, 0.5), c(0.1, 1))
-hist(out, 20)
+hist(out, 20, probability = TRUE,
+     main = '', xlab = 'Fractional change in concentration')
 }
 
