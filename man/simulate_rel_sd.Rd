@@ -4,17 +4,17 @@
 \alias{simulate_rel_sd}
 \title{Simulate Measurement Variability}
 \usage{
-simulate_rel_sd(n, p, par1, par2, con = c(0, 1))
+simulate_rel_sd(n, par1, par2 = NULL, p = 0.05, con = c(0, 1))
 }
 \arguments{
 \item{n}{Number of samples to draw.}
 
-\item{p}{Proportion of samples to draw using \code{par1} vs. \code{par2}.
-Note, \code{p} is ignored if \code{par2} is not specified.}
-
 \item{par1}{Parameters (mean, sd) for first distribution.}
 
 \item{par2}{Optional parameters (mean, sd) for second distribution.}
+
+\item{p}{Proportion of samples to draw using \code{par1} vs. \code{par2}.
+Note, \code{p} is ignored if \code{par2} is not specified.}
 
 \item{con}{Optional vector of lower and upper constraints on generated
 samples. By default, relative standard deviations are limited

@@ -4,6 +4,6 @@ Version: 0.2
 Authors@R: person("Stanislav", "Sokolenko", email = "stanislav@sokolenko.net", role = c("aut", "cre"))
 Description: A collection of scripts for the simulation of metabolic time-course trends typical of suspension cell culture as well as correction of systematic sample bias. The methods accompany a publication titled "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation".
 URL: https://github.com/ssokolen/metcourse
-Depends: R (>= 3.2.1)
+Depends: R (>= 3.2.1), dplyr (>= 0.4.2), tidyr (>= 0.2.0)
 License: Apache (>= 2.0)
 LazyData: true

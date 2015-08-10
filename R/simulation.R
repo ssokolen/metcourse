@@ -1,7 +1,5 @@
 # Functions for simulating metabolic time-courses.
 
-library(dplyr)
-
 #=========================================================================>
 # Helper functions
 
@@ -175,8 +173,6 @@ simulate_characteristic <- function(n, dist1, par1, dist2 = NULL, par2 = NULL,
     rtotal <- function(n) rmix(n, p, rdist1, rdist2)
   }
 
-  print(rtotal)
-
   if (is.null(con)) {
     out <- rtotal(n)
   } else {
@@ -263,7 +259,7 @@ simulate_max <- function(n, par1, par2 = NULL, p = 0.5, con = NULL) {
 #' hist(out, 20, probability = TRUE, 
 #'      main = '', xlab = 'Fractional change in concentration')
 #' @export
-simulate_rel_change <- function(n, par1, par2=NULL, p=0.5, con=NULL) {
+simulate_rel_change <- function(n, par1, par2 = NULL, p = 0.5, con = NULL) {
 
   if (is.null(par2)) {
     out <- simulate_characteristic(n, rbeta, as.list(par1), con=con)
@@ -300,7 +296,7 @@ simulate_rel_change <- function(n, par1, par2=NULL, p=0.5, con=NULL) {
 #' hist(out, 20, probability = TRUE, 
 #'      main = '', xlab = 'Relative standard deviation')
 #' @export
-simulate_rel_sd <- function(n, p, par1, par2, con=c(0,1)) {
+simulate_rel_sd <- function(n, par1, par2 = NULL, p = 0.05, con = c(0, 1)) {
 
   if (is.null(par2)) {
     out <- simulate_characteristic(n, rnorm, as.list(par1), con=con)
@@ -378,6 +374,11 @@ simulate_trend <- function(n, n.samples, f_trend, par1, par2 = NULL, p = 0.5) {
 
   # Defining x variables
   x <- seq(0, 1, length.out=n.samples)
+
+  # Forcing 1-row matrix to be a matrix
+  if (is.null(dim(par))) {
+    dim(par) <- c(1, n.par/2)
+  }
 
   # Applying f_trend on every set of parameters
   out <- apply(par, 1, function(par) f_trend(x, par))
@@ -587,7 +588,266 @@ simulate_linear <- function(n, n.samples, p) {
   out <- rbind(out1, out2)
   out <- out[sample(1:n), ]
 
+  if (is.null(dim(out))) {
+    dim(out) <- c(1, n.samples)
+  }
+
   return(as.data.frame(out))
 } 
 
+#-------------------------------------------------------------------------
+#' Simulate Full Metabolic Time-courses
+#'
+#' Combines various simulating functions to generate "experiments" composed
+#' of multiple trends based on provided parameters. This function is meant 
+#' as a template for custom simulations.
+#'
+#' @param n.trends Number of trends to generate per "experiment" i.e. number
+#'                 of metabolites.
+#' @param p A vector of fractions representing the proportions of decreasing, 
+#'          increasing, and concave trends (in that order). If the fractions
+#'          don't sum to one, the remainder of the trends are assumed to be
+#'          linear (undetermined). Note that floor() will be applied to convert
+#'          final numbers to integers.
+#' @param param A list of parameters to be fed into the simulation of various
+#'              time-course components. Parameters must be specified for
+#'              maximum concentration, relative changes in concentration,
+#'              measurement standard deviations, and the trends themselves.
+#'              Each component has a qualifier (max, change, sd, trend) that is
+#'              appended to the name of the argument used in the function 
+#'              e.g. max.par1 is used to set par1 for simulating maximum
+#'              concentrations. To specify different parameters for each type
+#'              of trend, append trend qualifier e.g. max.par1.decreasing can
+#'              be used to set the maximum concentrations of only decreasing
+#'              trends, with max.par1 used for all other trends.
+#' @param n.samples Number of timepoints within each trend.
+#' @param n.experiments Number of "experiments".
+#
+#' @return A "long" dataframe with the following columns: experiment, 
+#'         metabolite, sample, concentration.
+#'
+#' @examples
+#' # Constructing realistic list of parameters
+#' param <- list(
+#'   # Maximum concentrations are the same for every trend type
+#'   p.max = 0.3, 
+#'   par1.max = c(7, 2), 
+#'   par2.max = c(0.5, 2),  
+#'   con.max = c(0, 50), 
+#'               
+#'   # Global change parameters are near 100% for increasing/concave trends
+#'   par1.change = c(5, 0.1), 
+#'   con.change = c(0.5, 1),
+#' 
+#'   # Decreasing changes can have a wide variety of changes
+#'   p.change.decreasing = 0.7,  
+#'   par1.change.decreasing = c(2, 5), 
+#'   par2.change.decreasing = c(0.5, 0.5),
+#'   con.change.decreasing = c(0.1, 1),
+#' 
+#'   # Linear changes are characterized by relatively small changes
+#'   par1.change.linear = c(1, 5), 
+#'   con.change.linear = c(0, 0.1),
+#' 
+#'   # Measurement error is the same for every trend type (but no more than 20%)
+#'   p.sd = 0.7, 
+#'   par1.sd = c(0.04, 0.02), 
+#'   par2.sd = c(0.11, 0.02),
+#'   con.sd = c(0, 0.20),
+#' 
+#'   # Decreasing trend specification
+#'   p.trend.decreasing = 0.05,
+#'   par1.trend.decreasing = c(0.2, 0.6, 0.10, 0.18),
+#'   par2.trend.decreasing = c(0.6, 0.9, 0.10, 0.18),
+#' 
+#'   # Increasing trend specification
+#'   p.trend.increasing = 0.15,
+#'   par1.trend.increasing = c(0.045, 0.055, 0.2, 0.4),
+#'   par2.trend.increasing = c(0.945, 0.955, 0.1, 0.3),
+#' 
+#'   # Concave trend specification
+#'   par1.trend.concave = c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9),
+#' 
+#'   # Linear trends are equaly split between increasing and decreasing
+#'   p.trend.linear = 0.5
+#' )
+#'
+#' # Generating trends
+#' timecourse <- simulate_timecourse(10, c(0.3, 0.3, 0.3), param)
+#'
+#' # Plotting
+#' par(mfrow = c(5, 2), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
+#' 
+#' for (metabolite in unique(timecourse$metabolite)) {
+#'   logic <- timecourse$metabolite == metabolite  
+#'   plot(timecourse$sample[logic], timecourse$concentration[logic],
+#'        xlab='', ylab='')
+#' }
+#'
+#' title(xlab = 'Sample', ylab = 'Concentration', outer = TRUE, line = 3)
+#' @export
+simulate_timecourse <- function(n.trends, p, param,
+                                n.samples = 10, n.experiments = 1) {
 
+  if (any((p < 0) | (p > 1))) {
+   msg <- 'All elements of p must be between 0 and 1'
+   stop(msg)
+  } 
+
+  if (sum(p) > 1) {
+   msg <- 'Elements of p must sum to less than or equal to 1'
+   stop(msg)
+  } 
+
+  # Converting fractions to numbers
+  n.total <- n.trends
+  n.trends <- floor(p*n.trends)
+  n.trends <- c(n.trends, n.total - sum(n.trends))
+  names(n.trends) <- c('decreasing', 'increasing', 'concave', 'linear')
+  n.trends <- as.list(n.trends)
+
+  ### Parsing parameters
+
+  # Checking input
+  valid.parameters <- c('p', 'par1', 'par2', 'con')
+  valid.simulations <- c('max', 'change', 'sd', 'trend')
+  valid.trends <- c('decreasing', 'increasing', 'concave', 'linear')
+
+  general.param <- apply(expand.grid(valid.parameters, 
+                                     valid.simulations),
+                         1, paste, collapse='.')
+  specific.param <- apply(expand.grid(valid.parameters, 
+                                      valid.simulations,
+                                      valid.trends),
+                         1, paste, collapse='.')
+
+  param.names <- names(param)
+  invalid <- param.names[! param.names %in% c(general.param, specific.param)]
+
+  if (length(invalid) > 0 ) {
+    msg <- sprintf('The following parameters are not valid: %s',
+                   paste(invalid, collapse=', '))
+    stop(msg)
+  }
+  
+  # Initializing hierarchy
+  entries <- list('max'=list(), 'change'=list(), 'sd'=list(), 'trend'=list())
+  new.param <- list('decreasing'=entries, 'increasing'=entries,
+                    'concave'=entries, 'linear'=entries)
+
+  # Initializing all parameters to NULL  
+  for (entry in specific.param) {
+    tags <- strsplit(entry, '\\.')[[1]]
+    new.param[[tags[3]]][[tags[2]]][[tags[1]]] <- NULL
+  }
+
+  # Filling in general parameters 
+  for (entry in param.names[param.names %in% general.param]) {
+    tags <- strsplit(entry, '\\.')[[1]]
+    
+    for (trend in valid.trends) {
+      new.param[[trend]][[tags[2]]][[tags[1]]] <- param[[entry]]
+    }
+  }
+
+  # Filling in specific parameters
+  for (entry in param.names[param.names %in% specific.param]) {
+    tags <- strsplit(entry, '\\.')[[1]]
+    new.param[[tags[3]]][[tags[2]]][[tags[1]]] <- param[[entry]]
+  }
+
+  ### Generating timecourses
+  simulate_trend <- list('decreasing' = simulate_decreasing, 
+                         'increasing' = simulate_increasing,
+                         'concave' = simulate_concave,
+                         'linear' = simulate_linear)
+
+  # Initializing global data frame
+  combined <- c()
+
+  for (trend in valid.trends) {
+
+    # Generating experiment and metabolite tags
+    experiments <- rep(1:n.experiments, each=n.trends[[trend]])
+    metabolites <- paste(rep(1:n.trends[[trend]], n.experiments), trend, sep='')
+
+    # Calculating simulation number
+    n <- n.trends[[trend]] * n.experiments
+
+    # Generating trends
+    simulation <- 'trend'
+    par1 <- new.param[[trend]][[simulation]][['par1']]
+    par2 <- new.param[[trend]][[simulation]][['par2']]
+    p <- new.param[[trend]][[simulation]][['p']]
+    
+    if (trend == 'linear') {
+      trends <- simulate_trend[[trend]](n, n.samples, p)
+    } else {
+      trends <- simulate_trend[[trend]](n, n.samples, par1, par2, p)
+    }
+
+    sample.names <- paste('s', 1:n.samples, sep = '')
+    colnames(trends) <- sample.names
+
+    trends$experiment <- experiments
+    trends$metabolite <- metabolites
+
+    # Initializing single parameter dataframe
+    parameters <- data.frame(experiment=experiments, metabolite=metabolites,
+                             stringsAsFactors=FALSE)
+
+    # Maximum concentrations
+    simulation <- 'max'
+    p <- new.param[[trend]][[simulation]][['p']]
+    par1 <- new.param[[trend]][[simulation]][['par1']]
+    par2 <- new.param[[trend]][[simulation]][['par2']]
+    con <- new.param[[trend]][[simulation]][['con']]
+    parameters$max <- simulate_max(n, par1, par2, p, con)
+
+    # Minimum concentrations (calculated from percent change)
+    simulation <- 'change'
+    p <- new.param[[trend]][[simulation]][['p']]
+    par1 <- new.param[[trend]][[simulation]][['par1']]
+    par2 <- new.param[[trend]][[simulation]][['par2']]
+    con <- new.param[[trend]][[simulation]][['con']]
+    changes <- simulate_rel_change(n, par1, par2, p, con)
+    parameters$min <- parameters$max * (1 - changes)
+
+    # Measurement standard deviations
+    simulation <- 'sd'
+    p <- new.param[[trend]][[simulation]][['p']]
+    par1 <- new.param[[trend]][[simulation]][['par1']]
+    par2 <- new.param[[trend]][[simulation]][['par2']]
+    con <- new.param[[trend]][[simulation]][['con']]
+    parameters$sd <- simulate_rel_sd(n, par1, par2, p, con)
+
+    # Combining
+    trends <- left_join(trends, parameters, by = c('experiment', 'metabolite'))
+
+    # Converting to long format
+    trends <- gather_(trends, 'sample', 'conc', sample.names)
+
+    # Applying parameters
+    trends <- trends %>%
+                group_by(experiment, metabolite) %>%
+                mutate(conc = conc * (max - min) + min,
+                       conc = conc + rnorm(n(), 0, mean(conc) * sd)) %>%
+                select(experiment, metabolite, sample, conc) %>%
+                rename(concentration=conc) %>%
+                ungroup()
+
+    combined <- rbind(combined, trends)
+  }
+
+  # Randomizing metabolite names
+  met.names <- sample(1:n.total)
+  names(met.names) <- unique(combined$metabolite)
+
+  combined$metabolite <- as.numeric(met.names[combined$metabolite])
+  combined$sample <- as.numeric(gsub('s', '', combined$sample))
+  combined$experiment <- as.numeric(combined$experiment)
+
+  combined <- arrange(combined, experiment, metabolite, sample)
+
+  return(combined)
+}
