@@ -15,7 +15,8 @@ met_smooth_loess(time, concentration, new.time = NULL, ...)
 
 \item{...}{Arguments to be passed into the loess() smoothing function,
 such as span -- "the parameter alpha which controls the degree of
-smoothing".}
+smoothing". If no additional arguments are provided, a reasonable
+default for span (0.75) is assumed.}
 }
 \value{
 A vector of smoothed concentrations.

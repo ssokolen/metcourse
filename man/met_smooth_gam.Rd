@@ -4,7 +4,7 @@
 \alias{met_smooth_gam}
 \title{GAM Smoothing}
 \usage{
-met_smooth_gam(time, concentration, new.time = NULL, ...)
+met_smooth_gam(time, concentration, new.time = NULL, warn = FALSE, ...)
 }
 \arguments{
 \item{time}{Time or sample number for metabolite time-course.}
@@ -13,8 +13,15 @@ met_smooth_gam(time, concentration, new.time = NULL, ...)
 
 \item{new.time}{Optional vector for new independent variables.}
 
+\item{warn}{The \code{gam} function uses internal warning suppression that
+doesn't appear to work when used in conjunction with dplyr.
+All warning messages are suppressed by default here. Set to
+TRUE to unsuppress.}
+
 \item{...}{Arguments to be passed into the s() smoothing function, such as
-k -- the dimension of the basis used to represent the smooth term.}
+k -- the dimension of the basis used to represent the smooth term.
+If no additional arguments are provided, a reasonable default
+for k (5) is assumed.}
 }
 \value{
 A vector of smoothed concentrations.

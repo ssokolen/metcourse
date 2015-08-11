@@ -639,13 +639,13 @@ simulate_linear <- function(n, n.samples, p) {
 #'   par1.change = c(5, 0.1), 
 #'   con.change = c(0.5, 1),
 #' 
-#'   # Decreasing changes can have a wide variety of changes
+#'   # Decreasing trends can have a wide variety of changes
 #'   p.change.decreasing = 0.7,  
 #'   par1.change.decreasing = c(2, 5), 
 #'   par2.change.decreasing = c(0.5, 0.5),
 #'   con.change.decreasing = c(0.1, 1),
 #' 
-#'   # Linear changes are characterized by relatively small changes
+#'   # Linear trends are characterized by relatively small changes
 #'   par1.change.linear = c(1, 5), 
 #'   con.change.linear = c(0, 0.1),
 #' 
