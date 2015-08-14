@@ -230,9 +230,13 @@ simulate_max <- function(n, par1, par2 = NULL, p = 0.5, con = NULL) {
       stop(msg)
     }
 
-    out <- simulate_characteristic(n, rnorm, as.list(log10(par1)), 
-                                      rnorm, as.list(log10(par2)), 
-                                      p, con)
+  if (!is.null(con)) {
+    con <- log10(con)
+  }
+
+  out <- simulate_characteristic(n, rnorm, as.list(log10(par1)), 
+                                    rnorm, as.list(log10(par2)),                                       
+                                    p, con)
   }
 
   return(10**out)
