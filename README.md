@@ -406,5 +406,5 @@ The correction of systematic bias is performed by `correct_rel_bias`, which requ
   }
 
   title(xlab = 'Time post inoculation (hours)',
-  ylab = 'Concentration (mM)', outer = TRUE, line = 3)
+        ylab = 'Concentration (mM)', outer = TRUE, line = 3)
 ```
