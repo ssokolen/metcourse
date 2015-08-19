@@ -149,10 +149,10 @@ To avoid correlations between minimum and maximum concentrations, minimum concen
 The simulation of measurement error follows the same pattern as above, with the distribution of relative standard deviations modelled as a mixture of normal distributions.
 
 ```R
-  # First set of parameters for high precision measurements (sd ~ 5\%)
+  # First set of parameters for high precision measurements (sd ~ 5%)
   par1 <- c(0.05, 0.02)
 
-  # Second set of parameters for lower precision measurements (sd ~ 10\%
+  # Second set of parameters for lower precision measurements (sd ~ 10%)
   par2 <- c(0.10, 0.04)
 
   # Constraints are important to prevent negative or impossibly low variability
@@ -168,7 +168,7 @@ The simulation of measurement error follows the same pattern as above, with the 
 
 ## Putting it all together
 
-The above functions can be combined manually to generate a set of trends. Alternatively `simulate_timecourse` simplifies the process, but a large number of parameters are still required. 
+The above functions can be combined manually to generate a set of trends. Alternatively, `simulate_timecourse` simplifies the process, but a large number of parameters are still required. 
 
 ```R
   # This example makes use of tidyr and dplyr packages
@@ -188,7 +188,7 @@ The above functions can be combined manually to generate a set of trends. Altern
   # Adding metabolite column
   trends$metabolite <- metabolites
 
-  # Generating parameters
+  # Initializing data frame of parameters
   parameters <- data.frame(metabolite = metabolites, stringsAsFactors = FALSE)
 
   # Adding maximums
@@ -287,9 +287,9 @@ The following example simulates a full metabolic profile from a suspension cell 
   par(mfrow = c(5, 2), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
 
   for (metabolite in unique(timecourse$metabolite)) {
-  logic <- timecourse$metabolite == metabolite
-  plot(timecourse$sample[logic], timecourse$concentration[logic],
-  xlab='', ylab='')
+    logic <- timecourse$metabolite == metabolite
+    plot(timecourse$sample[logic], timecourse$concentration[logic],
+    xlab='', ylab='')
   }
 
   title(xlab = 'Sample', ylab = 'Concentration', outer = TRUE, line = 3)
@@ -297,7 +297,7 @@ The following example simulates a full metabolic profile from a suspension cell 
 
 # Correction
 
-The correction of systematic bias is performed by `correct_rel_bias`, which requires only three arguments -- time or sample number, metabolite concentration, and a column of metabolites corresponding to each concentration. We have found that the cubic regression spline smooth provided by the `mgcv` package yielded the best results (with a basis dimension, k, of 5).
+The correction of systematic bias is performed by `correct_rel_bias`, which requires only three arguments -- time or sample number, metabolite concentration, and a column of metabolites corresponding to each concentration. We have found that the cubic regression spline smooth provided by the `mgcv` package yielded the best results (with a basis dimension, k, of 5) and this smooth is used by default. Custom smoothing functions can also be defined (see `met_smooth_gam` and `met_smooth_loess`).
 
 ```R
   ## Generating a set of metabolic trends to perform correction
