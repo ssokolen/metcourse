@@ -15,9 +15,19 @@ library(devtools)
 install_github('ssokolen/metcourse')
 ```
 
+# Table of contents
+
+1. [Metabolite time-course simulation](#metabolite-time-course-simulation)
+  1. [Trend shape](#trend-shape)
+  2. [Maximum concentrations](#maximum-concentrations)
+  3. [Minimum concentrations](#minimum-concentrations)
+  4. [Measurement error](#measurement-error)
+  5. [Putting it all together](#putting-it-all-together)
+2. [Correction](#correction)
+
 # Metabolite time-course simulation
 
-The simulation of metabolite concentration time-courses is divided into 4 parameters -- the overall shape of the trend, maximum concentration, minimum concentration, and measurement variability (noise). Each step can be run separately or all at once.
+The simulation of metabolite concentration time-courses is divided into 4 parameters -- the overall shape of the trend, maximum concentration, minimum concentration, and measurement variability (noise). Each step can be run separately via or combined into a single simulation.
 
 ## Trend shape 
 
@@ -28,7 +38,7 @@ Metabolic time-course shapes are divided into decreasing, increasing, and concav
   # on the a and b coefficients in (1 + exp((x-a)/b))^(-1)
   par <- c(0.2, 0.6, 0.10, 0.18)
 
-  # Simulating 1000 trends with 100 timepoints per trend using
+  # Simulating 1000 trends with 100 timepoints per trend
   trends <- simulate_decreasing(1000, 100, par)
 
   # Plotting all trends at once
@@ -53,7 +63,7 @@ Metabolic time-course shapes are divided into decreasing, increasing, and concav
           xlab = 'Relative culturing time', ylab = 'Relative concentration')
 ```
 
-See examples for `simulate_increasing` and `simulate_concave`.
+See examples for `simulate_increasing` and `simulate_concave` i.e. `example(simulate_increasing)` and `example(simulate_concave)`.
 
 ## Maximum concentrations
 
@@ -127,7 +137,7 @@ To avoid correlations between minimum and maximum concentrations, minimum concen
        main = 'Relative change', xlab = 'Fractional change in concentration')
 
   # Repeating with only one set of parameters and with constraints
-  out <- simulate_rel_change(10000, par1, con = c(.1, .5))
+  out <- simulate_rel_change(10000, par1, con = c(0.1, 0.5))
 
   # Plotting
   hist(out, 20, probability = TRUE,
