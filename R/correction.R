@@ -265,14 +265,22 @@ correct_rel_bias <- function(time, concentration, metabolite,
   # Generating data frame, with a new "corrected" column
   d <- data.frame(time, concentration, corrected = concentration, 
                   metabolite, original = 1:length(time))
+  
+  extra_args <- list(...)
 
+  # Passing in extra parameters into smoothing
+  f_smooth_dply <- function(time, corrected) {
+    args <- list(time = time, corrected = corrected)
+    do.call(f_smooth, c(args, extra_args))
+  }
+  
   # Iteratively correcting systematic deviation
   for (i in 1:max.iter) {
-    
+
     # Generating fit and calculating deviations
     d <- d %>%
            group_by(metabolite) %>%
-           mutate(fit = f_smooth(time, corrected, ...),
+           mutate(fit = f_smooth(time, corrected),
                   deviation = (corrected - fit) / corrected)
 
     # Identifying the timepoint with largest deviation 
