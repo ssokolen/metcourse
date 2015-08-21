@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_timecourse}
 \alias{simulate_timecourse}
-\title{Simulate Full Metabolic Time-courses}
+\title{Simulate full metabolic time-courses}
 \usage{
 simulate_timecourse(n.trends, p, param, n.samples = 10, n.experiments = 1)
 }
@@ -43,6 +43,9 @@ as a template for custom simulations.
 }
 \examples{
 # Constructing realistic list of parameters
+# (this list of parameters can be loaded using data(timecourse_param) with
+# an example simulation loaded using data(timecourse))
+
 param <- list(
   # Maximum concentrations are the same for every trend type
   p.max = 0.3,

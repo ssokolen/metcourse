@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_rel_sd}
 \alias{simulate_rel_sd}
-\title{Simulate Measurement Variability}
+\title{Simulate measurement variability}
 \usage{
 simulate_rel_sd(n, par1, par2 = NULL, p = 0.05, con = c(0, 1))
 }

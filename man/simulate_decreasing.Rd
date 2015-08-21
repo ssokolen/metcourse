@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_decreasing}
 \alias{simulate_decreasing}
-\title{Simulate Decreasing Trends}
+\title{Simulate decreasing trends}
 \usage{
 simulate_decreasing(n, n.samples, par1, par2 = NULL, p = 0.5)
 }

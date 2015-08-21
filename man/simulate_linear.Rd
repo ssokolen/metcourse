@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_linear}
 \alias{simulate_linear}
-\title{Simulate Linear Trends}
+\title{Simulate linear trends}
 \usage{
 simulate_linear(n, n.samples, p)
 }

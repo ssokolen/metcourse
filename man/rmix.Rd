@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{rmix}
 \alias{rmix}
-\title{Mixes Random Samples}
+\title{Mix random samples}
 \usage{
 rmix(n, p, rdist1, rdist2)
 }

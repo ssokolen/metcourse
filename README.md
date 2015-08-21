@@ -1,6 +1,8 @@
 # metcourse
 
-Scripts for simulating metabolic time-course data from suspension cell cultures and correcting systematic deviations based on the manuscript "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation".
+`metcourse` provides a simple algorithm for correcting systematic deviations in metabolomic time-courses. Specifically, it deals with the case where all metabolite concentrations are overestimated or underestimated by a constant percentage withing a single sample. This can occur from inaccurate addition or processing of an internal standard as well as a result of variable solvent levels when dealing with intracellular metabolite extraction or biofluids. The correction method was validated by simulating realistic metabolic time-courses, with the simulation framework also provided in this package.
+
+More information is available in the manuscript "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation" (in press).
 
 # Original code
 
@@ -17,17 +19,82 @@ install_github('ssokolen/metcourse')
 
 # Table of contents
 
-1. [Metabolite time-course simulation](#metabolite-time-course-simulation)
+1. [Correction](#correction)
+2. [Simulation](#metabolite-time-course-simulation)
   1. [Trend shape](#trend-shape)
   2. [Maximum concentrations](#maximum-concentrations)
   3. [Minimum concentrations](#minimum-concentrations)
   4. [Measurement error](#measurement-error)
   5. [Putting it all together](#putting-it-all-together)
-2. [Correction](#correction)
 
-# Metabolite time-course simulation
+# Correction
 
-The simulation of metabolite concentration time-courses is divided into 4 parameters -- the overall shape of the trend, maximum concentration, minimum concentration, and measurement variability (noise). Each step can be run separately via or combined into a single simulation.
+The correction of systematic bias is performed by `correct_rel_bias`, which requires only three arguments -- time or sample number, metabolite concentration, and a column of metabolites corresponding to each concentration. We have found that the cubic regression spline smooth provided by the `mgcv` package yielded the best results (with a basis dimension, k, of 5) and this smooth is used by default. Custom smoothing functions can also be defined (see `met_smooth_gam` and `met_smooth_loess`).
+
+```R
+  ## Generating a set of metabolic trends to perform correction
+ 
+  # Using previously simulated data 40 metabolic trends with 10 time points
+  # (see Simulation section below and the `simulate_timecourse` example)
+  data(timecourse)
+
+  # Artificially adding an error of 5% at sample 4
+  logic <- timecourse$sample == 4
+  timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05
+
+  ## The correction itself
+
+  timecourse$corrected <- correct_rel_bias(timecourse$time,
+                                           timecourse$concentration,
+                                           timecourse$metabolite)
+
+  # f_smooth argument can be used to set any smoothing function that takes
+  # an input of concentrations and returns corrected values.
+  # met_smooth_loess and met_smooth_gam have been provided as simple wrappers
+  # to gam and loess.
+
+  # span is passed on to loess
+  timecourse$corrected_loess <- correct_rel_bias(timecourse$time,
+                                                 timecourse$concentration,
+                                                 timecourse$metabolite,
+                                                 f_smooth = met_smooth_loess,
+                                                 span = 0.75)
+
+  # k is passed on to gam
+  timecourse$corrected_loess <- correct_rel_bias(timecourse$time,
+                                                 timecourse$concentration,
+                                                 timecourse$metabolite,
+                                                 f_smooth = met_smooth_gam,
+                                                 k = 5)
+
+  # Plotting -- the original value of the corrected point is marked in red
+  par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
+  new.time <- seq(min(timecourse$time), max(timecourse$time), length.out=100)
+
+  for (metabolite in unique(timecourse$metabolite)) {
+
+    logic <- timecourse$metabolite == metabolite
+    d <- timecourse[logic, ]
+
+    logic2 <- d$concentration != d$corrected
+
+    plot(d$time, d$corrected, pch = 16, xlab = '', ylab = '',
+    ylim = c(min(d$concentration), max(d$concentration)))
+
+    smoothed <- met_smooth_gam(d$time, d$corrected,
+    new.time = new.time, k = 4)
+    lines(new.time, smoothed)
+
+    points(d$time[logic2], d$concentration[logic2], pch = 16, col = 'red')
+  }
+
+  title(xlab = 'Time post inoculation (hours)',
+        ylab = 'Concentration (mM)', outer = TRUE, line = 3)
+```
+
+# Simulation
+
+The simulation of metabolite concentration time-courses is divided into 4 parameters -- the overall shape of the trend, maximum concentration, minimum concentration, and measurement variability (noise). Each step can be run separately or combined into a single simulation.
 
 ## Trend shape 
 
@@ -295,116 +362,4 @@ The following example simulates a full metabolic profile from a suspension cell 
   title(xlab = 'Sample', ylab = 'Concentration', outer = TRUE, line = 3)
 ```
 
-# Correction
 
-The correction of systematic bias is performed by `correct_rel_bias`, which requires only three arguments -- time or sample number, metabolite concentration, and a column of metabolites corresponding to each concentration. We have found that the cubic regression spline smooth provided by the `mgcv` package yielded the best results (with a basis dimension, k, of 5) and this smooth is used by default. Custom smoothing functions can also be defined (see `met_smooth_gam` and `met_smooth_loess`).
-
-```R
-  ## Generating a set of metabolic trends to perform correction
-
-  set.seed(1111)
- 
-  # Setting parameters to generate 40 metabolic trends with 10 time points
-  param <- list(
-    # Maximum concentrations are the same for every trend type
-    p.max = 0.3,
-    par1.max = c(7, 2),
-    par2.max = c(0.5, 2),
-    con.max = c(0, 50),
-
-    # Global change parameters are near 100% for increasing/concave trends
-    par1.change = c(5, 0.1),
-    con.change = c(0.5, 1),
-
-    # Decreasing trends can have a wide variety of changes
-    p.change.decreasing = 0.7,
-    par1.change.decreasing = c(2, 5),
-    par2.change.decreasing = c(0.5, 0.5),
-    con.change.decreasing = c(0.1, 1),
-
-    # Linear trends are characterized by relatively small changes
-    par1.change.linear = c(1, 5),
-    con.change.linear = c(0, 0.1),
-
-    # Measurement error is the same for every trend type (but no more than 20%)
-    p.sd = 0.7,
-    par1.sd = c(0.04, 0.02),
-    par2.sd = c(0.11, 0.02),
-    con.sd = c(0, 0.20),
-
-    # Decreasing trend specification
-    p.trend.decreasing = 0.05,
-    par1.trend.decreasing = c(0.2, 0.6, 0.10, 0.18),
-    par2.trend.decreasing = c(0.6, 0.9, 0.10, 0.18),
-
-    # Increasing trend specification
-    p.trend.increasing = 0.15,
-    par1.trend.increasing = c(0.045, 0.055, 0.2, 0.4),
-    par2.trend.increasing = c(0.945, 0.955, 0.1, 0.3),
-
-    # Concave trend specification
-    par1.trend.concave = c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9),
-
-    # Linear trends are equaly split between increasing and decreasing
-    p.trend.linear = 0.5
-  )
-
-  # Generating trends
-  timecourse <- simulate_timecourse(40, c(0.4, 0.2, 0.2), param)
-
-  # Adding times
-  timecourse$time <- (timecourse$sample - 1)*24
-
-  # Artificially adding an error of 10% at sample 4
-  logic <- timecourse$sample == 4
-  timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05
-
-  ## The correction itself
-
-  timecourse$corrected <- correct_rel_bias(timecourse$time,
-                                           timecourse$concentration,
-                                           timecourse$metabolite)
-
-  # f_smooth argument can be used to set any smoothing function that takes
-  # an input of concentrations and returns corrected values.
-  # met_smooth_loess and met_smooth_gam have been provided as simple wrappers
-  # to gam and loess.
-
-  # span is passed on to loess
-  timecourse$corrected_loess <- correct_rel_bias(timecourse$time,
-                                                 timecourse$concentration,
-                                                 timecourse$metabolite,
-                                                 f_smooth = met_smooth_loess,
-                                                 span = 0.75)
-
-  # k is passed on to gam
-  timecourse$corrected_loess <- correct_rel_bias(timecourse$time,
-                                                 timecourse$concentration,
-                                                 timecourse$metabolite,
-                                                 f_smooth = met_smooth_gam,
-                                                 k = 5)
-
-  # Plotting -- the original value of the corrected point is marked in red
-  par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
-  new.time <- seq(min(timecourse$time), max(timecourse$time), length.out=100)
-
-  for (metabolite in unique(timecourse$metabolite)) {
-
-    logic <- timecourse$metabolite == metabolite
-    d <- timecourse[logic, ]
-
-    logic2 <- d$concentration != d$corrected
-
-    plot(d$time, d$corrected, pch = 16, xlab = '', ylab = '',
-    ylim = c(min(d$concentration), max(d$concentration)))
-
-    smoothed <- met_smooth_gam(d$time, d$corrected,
-    new.time = new.time, k = 4)
-    lines(new.time, smoothed)
-
-    points(d$time[logic2], d$concentration[logic2], pch = 16, col = 'red')
-  }
-
-  title(xlab = 'Time post inoculation (hours)',
-        ylab = 'Concentration (mM)', outer = TRUE, line = 3)
-```

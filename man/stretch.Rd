@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{stretch}
 \alias{stretch}
-\title{Scales Random Samples}
+\title{Scales random samples}
 \usage{
 stretch(x, con)
 }

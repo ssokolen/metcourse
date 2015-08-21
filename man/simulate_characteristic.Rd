@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_characteristic}
 \alias{simulate_characteristic}
-\title{Simulate Time-course Characteristic}
+\title{Simulate time-course characteristic}
 \usage{
 simulate_characteristic(n, dist1, par1, dist2 = NULL, par2 = NULL,
   p = 0.5, con = NULL)

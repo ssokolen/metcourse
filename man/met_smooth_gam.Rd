@@ -2,7 +2,7 @@
 % Please edit documentation in R/correction.R
 \name{met_smooth_gam}
 \alias{met_smooth_gam}
-\title{GAM Smoothing}
+\title{GAM smoothing}
 \usage{
 met_smooth_gam(time, concentration, new.time = NULL, warn = FALSE, ...)
 }

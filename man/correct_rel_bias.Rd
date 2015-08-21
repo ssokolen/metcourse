@@ -2,7 +2,7 @@
 % Please edit documentation in R/correction.R
 \name{correct_rel_bias}
 \alias{correct_rel_bias}
-\title{Correcting Systematic Bias in Metabolomic Timecourse Data}
+\title{Correct systematic bias in metabolomic time-course data}
 \usage{
 correct_rel_bias(time, concentration, metabolite, f_smooth = met_smooth_gam,
   max.iter = 20, min.deviation = 0.02, ...)
@@ -45,60 +45,10 @@ are assumed to be influenced by a measurement or methodological bias as
 compared to the overall trends metabolite concentrations.
 }
 \examples{
-set.seed(1111)
+# Using previously simulated data 40 metabolic trends with 10 time points
+data(timecourse)
 
-# Setting parameters to generate 40 metabolic trends with 10 time points
-param <- list(
-  # Maximum concentrations are the same for every trend type
-  p.max = 0.3,
-  par1.max = c(7, 2),
-  par2.max = c(0.5, 2),
-  con.max = c(0, 50),
-
-  # Global change parameters are near 100\% for increasing/concave trends
-  par1.change = c(5, 0.1),
-  con.change = c(0.5, 1),
-
-  # Decreasing trends can have a wide variety of changes
-  p.change.decreasing = 0.7,
-  par1.change.decreasing = c(2, 5),
-  par2.change.decreasing = c(0.5, 0.5),
-  con.change.decreasing = c(0.1, 1),
-
-  # Linear trends are characterized by relatively small changes
-  par1.change.linear = c(1, 5),
-  con.change.linear = c(0, 0.1),
-
-  # Measurement error is the same for every trend type (but no more than 20\%)
-  p.sd = 0.7,
-  par1.sd = c(0.04, 0.02),
-  par2.sd = c(0.11, 0.02),
-  con.sd = c(0, 0.20),
-
-  # Decreasing trend specification
-  p.trend.decreasing = 0.05,
-  par1.trend.decreasing = c(0.2, 0.6, 0.10, 0.18),
-  par2.trend.decreasing = c(0.6, 0.9, 0.10, 0.18),
-
-  # Increasing trend specification
-  p.trend.increasing = 0.15,
-  par1.trend.increasing = c(0.045, 0.055, 0.2, 0.4),
-  par2.trend.increasing = c(0.945, 0.955, 0.1, 0.3),
-
-  # Concave trend specification
-  par1.trend.concave = c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9),
-
-  # Linear trends are equaly split between increasing and decreasing
-  p.trend.linear = 0.5
-)
-
-# Generating trends
-timecourse <- simulate_timecourse(40, c(0.4, 0.2, 0.2), param)
-
-# Adding times
-timecourse$time <- (timecourse$sample - 1)*24
-
-# Adding an error of 10\% at sample 4
+# Adding an error of 5\% at sample 4
 logic <- timecourse$sample == 4
 timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05
 

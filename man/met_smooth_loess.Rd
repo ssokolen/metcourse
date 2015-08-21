@@ -2,7 +2,7 @@
 % Please edit documentation in R/correction.R
 \name{met_smooth_loess}
 \alias{met_smooth_loess}
-\title{LOESS Smoothing}
+\title{LOESS smoothing}
 \usage{
 met_smooth_loess(time, concentration, new.time = NULL, ...)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_rel_change}
 \alias{simulate_rel_change}
-\title{Simulate Concentration Changes}
+\title{Simulate concentration changes}
 \usage{
 simulate_rel_change(n, par1, par2 = NULL, p = 0.5, con = NULL)
 }

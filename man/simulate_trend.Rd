@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_trend}
 \alias{simulate_trend}
-\title{Simulate Trends}
+\title{Simulate trends}
 \usage{
 simulate_trend(n, n.samples, f_trend, par1, par2 = NULL, p = 0.5)
 }

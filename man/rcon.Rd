@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{rcon}
 \alias{rcon}
-\title{Constrains Random Samples}
+\title{Constrain random samples}
 \usage{
 rcon(n, rdist, con, max.iter = 100)
 }

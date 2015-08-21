@@ -4,7 +4,7 @@
 # Helper functions
 
 #------------------------------------------------------------------------
-#' Constrains Random Samples 
+#' Constrain random samples 
 #'
 #' Resamples supplied distribution to ensure generated values fall
 #' within given constraints.
@@ -61,7 +61,7 @@ rcon <- function(n, rdist, con, max.iter=100) {
 }
 
 #------------------------------------------------------------------------
-#' Mixes Random Samples 
+#' Mix random samples 
 #'
 #' Generates a random sample by mixing two distributions.
 #
@@ -102,7 +102,7 @@ rmix <- function(n, p, rdist1, rdist2) {
 }
 
 #------------------------------------------------------------------------
-#' Scales Random Samples
+#' Scales random samples
 #'
 #' Stretches a vector of values between specified constraints.
 #
@@ -129,7 +129,7 @@ stretch <- function(x, con) {
 # Parameter simulation
 
 #-------------------------------------------------------------------------
-#' Simulate Time-course Characteristic
+#' Simulate time-course characteristic
 #'
 #' Underlying function for simulating maximum concentration, relative
 #' changes in concentration and relative standard deviations. Each simulation
@@ -183,7 +183,7 @@ simulate_characteristic <- function(n, dist1, par1, dist2 = NULL, par2 = NULL,
 }
 
 #-------------------------------------------------------------------------
-#' Simulates Maximum Concentrations
+#' Simulate maximum concentrations
 #'
 #' Simulates maximum metabolite concentrations using a mixture of 2 normal 
 #' distributions of concentration logarithms.
@@ -243,7 +243,7 @@ simulate_max <- function(n, par1, par2 = NULL, p = 0.5, con = NULL) {
 }
 
 #-------------------------------------------------------------------------
-#' Simulate Concentration Changes 
+#' Simulate concentration changes 
 #'
 #' Simulates relative (fractional) changes in metabolite concentrations using
 #' a mixture of beta distributions.
@@ -278,7 +278,7 @@ simulate_rel_change <- function(n, par1, par2 = NULL, p = 0.5, con = NULL) {
 }
 
 #-------------------------------------------------------------------------
-#' Simulate Measurement Variability 
+#' Simulate measurement variability 
 #'
 #' Simulates relative standard deviations (coefficients of variation) using
 #' a mixture of 2 normal distributions (one subpopulation of less variable
@@ -318,7 +318,7 @@ simulate_rel_sd <- function(n, par1, par2 = NULL, p = 0.05, con = c(0, 1)) {
 # Trend simulation
 
 #-------------------------------------------------------------------------
-#' Simulate Trends
+#' Simulate trends
 #'
 #' Underlying function for simulating different types of time-course trends.
 #' Each trend supports parameter generation from one or two sets of parameter
@@ -394,7 +394,7 @@ simulate_trend <- function(n, n.samples, f_trend, par1, par2 = NULL, p = 0.5) {
 }
 
 #-------------------------------------------------------------------------
-#' Simulate Decreasing Trends
+#' Simulate decreasing trends
 #'
 #' Simulates decreasing trends by mixing two sigmoid curve families. Sigmoid
 #' parameters are sampled from uniform distributions with boundaries provided
@@ -442,7 +442,7 @@ simulate_decreasing <- function(n, n.samples, par1, par2 = NULL, p = 0.5) {
 }
 
 #-------------------------------------------------------------------------
-#' Simulate Increasing Trends
+#' Simulate increasing trends
 #'
 #' Simulates increasing trends by mixing two sigmoid curve families. Sigmoid
 #' parameters are sampled from uniform distributions with boundaries provided
@@ -488,7 +488,7 @@ simulate_increasing <- function(n, n.samples, par1, par2 = NULL, p = 0.5) {
 }
 
 #-------------------------------------------------------------------------
-#' Simulate Concave Trends
+#' Simulate concave trends
 #'
 #' Simulates concave trends by mixing trimmed and scaled beta distributions. 
 #' parameters are sampled from uniform distributions with boundaries provided
@@ -552,7 +552,7 @@ simulate_concave <- function(n, n.samples, par1, par2 = NULL, p = 0.5) {
 } 
 
 #-------------------------------------------------------------------------
-#' Simulate Linear Trends
+#' Simulate linear trends
 #'
 #' Simulates linear trends with p fraction decreasing and (1-p) fraction
 #' increasing.
@@ -600,7 +600,7 @@ simulate_linear <- function(n, n.samples, p) {
 } 
 
 #-------------------------------------------------------------------------
-#' Simulate Full Metabolic Time-courses
+#' Simulate full metabolic time-courses
 #'
 #' Combines various simulating functions to generate "experiments" composed
 #' of multiple trends based on provided parameters. This function is meant 
@@ -632,6 +632,9 @@ simulate_linear <- function(n, n.samples, p) {
 #'
 #' @examples
 #' # Constructing realistic list of parameters
+#' # (this list of parameters can be loaded using data(timecourse_param) with
+#' # an example simulation loaded using data(timecourse))
+#'
 #' param <- list(
 #'   # Maximum concentrations are the same for every trend type
 #'   p.max = 0.3, 

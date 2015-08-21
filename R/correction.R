@@ -4,7 +4,7 @@
 # Smoothing functions used for correction
 
 #------------------------------------------------------------------------
-#' GAM Smoothing
+#' GAM smoothing
 #'
 #' Wraps GAM smoothing function for use in bias correction algorithm.
 #'
@@ -74,7 +74,7 @@ met_smooth_gam <- function(time, concentration, new.time = NULL,
 }
 
 #------------------------------------------------------------------------
-#' LOESS Smoothing
+#' LOESS smoothing
 #'
 #' Wraps LOESS smoothing function for use in bias correction algorithm. 
 #' WARNING: LOESS is not a particularly good choice for bias correction. 
@@ -139,7 +139,7 @@ met_smooth_loess <- function(time, concentration, new.time = NULL, ...) {
 # Correction function
 
 #------------------------------------------------------------------------
-#' Correcting Systematic Bias in Metabolomic Timecourse Data
+#' Correct systematic bias in metabolomic time-course data
 #'
 #' Identifies systematic deviations in metabolic data using a smoothing fit.
 #' Timepoints that have a median relative deviation above a threshold value
@@ -170,60 +170,11 @@ met_smooth_loess <- function(time, concentration, new.time = NULL, ...) {
 #' @return A vector of corrected concentrations.
 #'
 #' @examples
-#' set.seed(1111)
 #' 
-#' # Setting parameters to generate 40 metabolic trends with 10 time points
-#' param <- list(
-#'   # Maximum concentrations are the same for every trend type
-#'   p.max = 0.3, 
-#'   par1.max = c(7, 2), 
-#'   par2.max = c(0.5, 2),  
-#'   con.max = c(0, 50), 
-#'               
-#'   # Global change parameters are near 100% for increasing/concave trends
-#'   par1.change = c(5, 0.1), 
-#'   con.change = c(0.5, 1),
-#' 
-#'   # Decreasing trends can have a wide variety of changes
-#'   p.change.decreasing = 0.7,  
-#'   par1.change.decreasing = c(2, 5), 
-#'   par2.change.decreasing = c(0.5, 0.5),
-#'   con.change.decreasing = c(0.1, 1),
-#' 
-#'   # Linear trends are characterized by relatively small changes
-#'   par1.change.linear = c(1, 5), 
-#'   con.change.linear = c(0, 0.1),
-#' 
-#'   # Measurement error is the same for every trend type (but no more than 20%)
-#'   p.sd = 0.7, 
-#'   par1.sd = c(0.04, 0.02), 
-#'   par2.sd = c(0.11, 0.02),
-#'   con.sd = c(0, 0.20),
-#' 
-#'   # Decreasing trend specification
-#'   p.trend.decreasing = 0.05,
-#'   par1.trend.decreasing = c(0.2, 0.6, 0.10, 0.18),
-#'   par2.trend.decreasing = c(0.6, 0.9, 0.10, 0.18),
-#' 
-#'   # Increasing trend specification
-#'   p.trend.increasing = 0.15,
-#'   par1.trend.increasing = c(0.045, 0.055, 0.2, 0.4),
-#'   par2.trend.increasing = c(0.945, 0.955, 0.1, 0.3),
-#' 
-#'   # Concave trend specification
-#'   par1.trend.concave = c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9),
-#' 
-#'   # Linear trends are equaly split between increasing and decreasing
-#'   p.trend.linear = 0.5
-#' )
+#' # Using previously simulated data 40 metabolic trends with 10 time points
+#' data(timecourse)
 #'
-#' # Generating trends
-#' timecourse <- simulate_timecourse(40, c(0.4, 0.2, 0.2), param)
-#'
-#' # Adding times
-#' timecourse$time <- (timecourse$sample - 1)*24
-#'
-#' # Adding an error of 10% at sample 4
+#' # Adding an error of 5% at sample 4
 #' logic <- timecourse$sample == 4
 #' timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05 
 #'

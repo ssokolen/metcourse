@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_max}
 \alias{simulate_max}
-\title{Simulates Maximum Concentrations}
+\title{Simulate maximum concentrations}
 \usage{
 simulate_max(n, par1, par2 = NULL, p = 0.5, con = NULL)
 }

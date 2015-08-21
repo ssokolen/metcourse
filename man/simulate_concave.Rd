@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulation.R
 \name{simulate_concave}
 \alias{simulate_concave}
-\title{Simulate Concave Trends}
+\title{Simulate concave trends}
 \usage{
 simulate_concave(n, n.samples, par1, par2 = NULL, p = 0.5)
 }
