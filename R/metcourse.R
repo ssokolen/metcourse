@@ -15,7 +15,7 @@
 #' insect cells. The parameters used to generate this data can be seen in 
 #' `timecourse_param`.
 #'
-#' @format A data frame with 400 rows and 6 variables. The data simulates 1
+#' @format A data frame with 400 rows and 5 variables. The data simulates 1
 #'         metabolomic experiment where 40 metabolites are tracked over 10
 #'         timepoints.
 #' \describe{
@@ -24,8 +24,6 @@
 #'    \item{sample}{Samples numbered 1 to 10}
 #'    \item{concentration}{Metabolite concentrations (in mM)}
 #'    \item{time}{Time post inoculation}
-#'    \item{observed}{Metabolite concentrations with a known bias of 5% added 
-#'                    at sample 4.}
 #' }
 "timecourse"
 
