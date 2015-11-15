@@ -1,8 +1,8 @@
 # metcourse
 
-`metcourse` provides a simple algorithm for correcting systematic deviations in metabolomic time-courses. Specifically, it deals with the case where all metabolite concentrations are overestimated or underestimated by a constant percentage withing a single sample. This can occur from inaccurate addition or processing of an internal standard as well as a result of variable solvent levels when dealing with intracellular metabolite extraction or biofluids. The correction method was validated by simulating realistic metabolic time-courses, with the simulation framework also provided in this package.
+`metcourse` provides a simple algorithm for correcting systematic deviations in metabolomic time-courses. Specifically, it deals with the case where all metabolite concentrations are overestimated or underestimated by a constant percentage within a single sample. This can occur from inaccurate addition or processing of an internal standard as well as a result of variable solvent levels when dealing with intracellular metabolite extraction or biofluids. The correction method was validated by simulating realistic metabolic time-courses, with the simulation framework also provided in this package.
 
-More information is available in the manuscript "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation" (in press).
+More information is available in the manuscript "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation" ([open access link](doi:10.1186/s12918-015-0197-4)).
 
 # Original code
 
