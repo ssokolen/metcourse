@@ -1,4 +1,4 @@
-# Functions for correcting systematic bias
+# Functions for detecting systematic bias
 
 #========================================================================>
 # Smoothing functions used for correction
@@ -136,12 +136,12 @@ met_smooth_loess <- function(time, concentration, new.time = NULL, ...) {
 }
 
 #========================================================================>
-# Correction function
+# Detection function
 
 #------------------------------------------------------------------------
-#' Correct systematic bias in metabolomic time-course data
+#' Detect systematic bias in metabolomic time-course data
 #'
-#' Identifies systematic deviations in metabolic data using a smoothing fit.
+#' Identifies systematic deviations in metabolic data using a B-spline fit.
 #' Timepoints that have a median relative deviation above a threshold value
 #' are assumed to be influenced by a measurement or methodological bias as
 #' compared to the overall trends metabolite concentrations.
@@ -154,22 +154,13 @@ met_smooth_loess <- function(time, concentration, new.time = NULL, ...) {
 #' @param concentration A vector of metabolite concentrations.
 #' @param metabolite A vector of metabolite names that correspond to \code{time}
 #'                   and \code{concentration}.
-#' @param f_smooth Smoothing function (set to met_smooth_gam by default).
-#' @param max.iter The algorithm correct the single most deviating point at one
-#'                 time (as it may influence the identification of other
-#'                 deviations). \code{max.iter} controls the maximum number
-#'                 of correction passes.
 #' @param min.deviation Smallest median relative deviation to identify as a 
-#'                      bias. 0.02 has been found to be a good default for
-#'                      a diverse set of metabolic time-courses from
-#'                      higher eukaryote cell culture.
-#' @param ... Arguments to be passed into \code{f_smooth}, (such as k or
-#'            span parameters for met_smooth_gam and met_smooth_loess
-#'            respectively). 
-#
-#' @return A vector of corrected concentrations.
+#'                      bias. If not supplied, it will be estimated as 50% of the underlying noise in the data.
+#' @param ... Arguments to be passed into \code{f_smooth}, (such as degree and number of knots). 
 #'
-#' @examples
+#' @return A dataframe corresponding to the time points with systematic error.
+#'
+#' @examples 
 #' 
 #' # Using previously simulated data 40 metabolic trends with 10 time points
 #' data(timecourse)
@@ -178,80 +169,50 @@ met_smooth_loess <- function(time, concentration, new.time = NULL, ...) {
 #' logic <- timecourse$sample == 4
 #' timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05 
 #'
-#' # Correcting
-#' timecourse$corrected <- correct_rel_bias(timecourse$time, 
+#' # Estimating
+#' error <- correct_rel_bias(timecourse$time, 
 #'                                          timecourse$concentration,
 #'                                          timecourse$metabolite)
 #'
 #'
-#' # Plotting -- the original value of the corrected point is marked in red
-#' par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
-#' new.time <- seq(min(timecourse$time), max(timecourse$time), length.out=100)
-#' 
-#' for (metabolite in unique(timecourse$metabolite)) {
-#'
-#'   logic <- timecourse$metabolite == metabolite
-#'   d <- timecourse[logic, ]
-#'   
-#'   logic2 <- d$concentration != d$corrected
-#'
-#'   plot(d$time, d$corrected, pch = 16, xlab = '', ylab = '',  
-#'        ylim = c(min(d$concentration), max(d$concentration)))
-#'
-#'   smoothed <- met_smooth_gam(d$time, d$corrected,
-#'                              new.time = new.time, k = 5)
-#'   lines(new.time, smoothed)
-#'
-#'   points(d$time[logic2], d$concentration[logic2], pch = 16, col = 'red')
-#'
-#' }
-#'
-#' title(xlab = 'Time post inoculation (hours)', 
-#'       ylab = 'Concentration (mM)', outer = TRUE, line = 3)
 #' @export
-correct_rel_bias <- function(time, concentration, metabolite,
-                             f_smooth = met_smooth_gam, 
-                             max.iter = 20, min.deviation = 0.02, ...) {
+detect_rel_bias <- function(time, concentration, metabolite, min.deviation = NULL, ...) {
 
-  # Generating data frame, with a new "corrected" column
-  d <- data.frame(time, concentration, corrected = concentration, 
+  d <- data.frame(time, concentration, 
                   metabolite, original = 1:length(time))
   
   extra_args <- list(...)
 
   # Passing in extra parameters into smoothing
-  f_smooth_dply <- function(time, corrected) {
-    args <- list(time = time, corrected = corrected)
+  f_smooth_dply <- function(time, concentration) {
+    args <- list(time = time, concentration = concentration)
     do.call(f_smooth, c(args, extra_args))
   }
+
+  # Detecting systematic deviation
+  # Generating fit and calculating deviations
+  d <- d %>%
+         group_by(metabolite) %>%
+         mutate(fit = f_smooth(time, concentration),
+                deviation = (concentration - fit) / concentration)
+
+  # Identifying the timepoint with large deviation 
+  deviations <- d %>%
+                  group_by(time) %>%
+                  summarize(med = abs(median(deviation, na.rm = TRUE))) 
   
-  # Iteratively correcting systematic deviation
-  for (i in 1:max.iter) {
-
-    # Generating fit and calculating deviations
-    d <- d %>%
-           group_by(metabolite) %>%
-           mutate(fit = f_smooth(time, corrected),
-                  deviation = (corrected - fit) / corrected)
-
-    # Identifying the timepoint with largest deviation 
-    deviations <- d %>%
-                    group_by(time) %>%
-                    summarize(med = abs(median(deviation, na.rm = TRUE))) %>%
-                    arrange(desc(med))
-
-    if (deviations$med[1] < min.deviation) break
-
-    max_dev_time <- deviations$time[1]
-   
-    logic <- d$time == max_dev_time
-    d[logic, ] <- within(d[logic, ], {
-      corrected <- corrected - median(deviation) * corrected
-    })
+  # Estimate threshold if not supplied by user
+  if (is.null(min.deviation)) {
+    mean.dev <- d %>%
+      group_by(metabolite) %>%
+      summarize(mean.deviation = mean(abs(deviation), na.rm = TRUE)) 
+    med.dev <- median(mean.dev$mean.deviation, na.rm = TRUE)
+    min.deviation <- 0.5*med.dev
   }
 
-  # Correcting any changes in order
-  out <- d$corrected[order(d$original)]
+  deviations$error <- ifelse(deviations$med > min.deviation, TRUE, FALSE)
+
+  out <- deviations
   
   return(out)
 }
