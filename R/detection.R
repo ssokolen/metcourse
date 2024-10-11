@@ -1,94 +1,19 @@
 # Functions for detecting systematic bias
 
 #========================================================================>
-# Smoothing functions used for correction
-
 #------------------------------------------------------------------------
-#' GAM smoothing
+#' B-spline fit
 #'
-#' Wraps GAM smoothing function for use in bias correction algorithm.
+#' Wraps bSpline function for use in bias detection and correction algorithm. 
 #'
 #' @param time Time or sample number for metabolite time-course.
 #' @param concentration Metabolite concentration.
-#' @param new.time Optional vector for new independent variables.
-#' @param warn The \code{gam} function uses internal warning suppression that
-#'             doesn't appear to work when used in conjunction with dplyr.
-#'             All warning messages are suppressed by default here. Set to
-#'             TRUE to unsuppress.
-#' @param ... Arguments to be passed into the s() smoothing function, such as
-#'            k -- the dimension of the basis used to represent the smooth term.
-#'            If no additional arguments are provided, a reasonable default
-#'            for k (5) is assumed.
+#' @param ... Arguments to be passed into the bSpline() function, 
+#'            such as knots -- "The internal breakpoints that define the spline"
+#'            and degree -- "Non-negative integer degree of the piecewise polynomial". If no additional arguments are provided, a reasonable 
+#'            default for is assumed.
 #
-#' @return A vector of smoothed concentrations.
-#'
-#' @examples
-#' # Simulating concave curve with 10 points
-#' par <- c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9)
-#' concentration <- as.numeric(simulate_concave(1, 10, par))
-#' 
-#' # Adding noise and changing scale
-#' concentration <- concentration * 18 + 2
-#' abs.sd <- mean(concentration) * 0.1
-#' concentration <- concentration + rnorm(10, 0, abs.sd)
-#' concentration[concentration < 0] <- 0 
-#' 
-#' # Original sampling time
-#' time <- seq(0, 9, length.out=10) * 24
-#'
-#' # New time for smoothing
-#' new.time <- seq(0, 9, length.out=100) * 24
-#' 
-#' # Smoothing
-#' corrected <- met_smooth_gam(time, concentration, new.time = new.time, k = 5)
-#' 
-#' # Plotting
-#' plot(time, concentration, type='p', 
-#'      xlab='Time post inoculation (hours)', ylab='Concentration (mM)')
-#' lines(new.time, corrected, type='l')
-#' @export
-met_smooth_gam <- function(time, concentration, new.time = NULL,
-                           warn = FALSE, ...) {
-  
-  d <- data.frame(time = time, concentration = concentration)
-
-  if (warn) {
-    f_gam <- function(...) gam(...)
-  } else {
-    f_gam <- function(...) suppressWarnings(gam(...))
-  }
-
-  if (length(list(...)) == 0) {
-    model <- f_gam(concentration ~ s(time, bs='cr', k = 5), data = d)
-  } else {
-    model <- f_gam(concentration ~ s(time, bs='cr', ...), data = d)
-  }
-
-  if (! is.null(new.time)) {
-    d <- data.frame(time = new.time)
-  }
-
-  fit <- as.vector(predict(model, d))
-
-  return(fit)
-}
-
-#------------------------------------------------------------------------
-#' LOESS smoothing
-#'
-#' Wraps LOESS smoothing function for use in bias correction algorithm. 
-#' WARNING: LOESS is not a particularly good choice for bias correction. 
-#' This function is included for completeness only.
-#'
-#' @param time Time or sample number for metabolite time-course.
-#' @param concentration Metabolite concentration.
-#' @param new.time Optional vector for new independent variables.
-#' @param ... Arguments to be passed into the loess() smoothing function, 
-#'            such as span -- "the parameter alpha which controls the degree of
-#'            smoothing". If no additional arguments are provided, a reasonable 
-#'            default for span (0.75) is assumed.
-#
-#' @return A vector of smoothed concentrations.
+#' @return A vector of fit concentrations.
 #'
 #' @examples
 #' # Simulating concave curve with 10 points
@@ -104,36 +29,40 @@ met_smooth_gam <- function(time, concentration, new.time = NULL,
 #' # Original sample time
 #' time <- seq(0, 9, length.out=10) * 24
 #'
-#' # New time for smoothing
-#' new.time <- seq(0, 9, length.out=100) * 24
 #' 
-#' # Smoothing
-#' corrected <- met_smooth_loess(time, concentration, 
-#'                               new.time = new.time, span = 0.75)
+#' # Fitting
+#' fit <- fit_b_spline(time, concentration, 
+#'                               knots = c(0.5), degree = 2)
 #' 
 #' # Plotting
 #' plot(time, concentration, type='p', 
 #'      xlab='Time post inoculation (hours)', ylab='Concentration (mM)')
-#' lines(new.time, corrected, type='l')
+#' lines(time, fit, type='l')
 #' @export
-met_smooth_loess <- function(time, concentration, new.time = NULL, ...) {
+fit_b_spline <- function(x, concentration, ...) {
+  if (all(is.na(concentration))) return(concentration)
   
-  d <- data.frame(time = time, concentration = concentration)
+  d <- data.frame(x = x, concentration = concentration)
 
+  f_basis <- function(d, knots = c(0.5), degree = 3) {
+    B <- bSpline(d$x, knots = knots*max(d$x), degree = degree, intercept = TRUE)
+  }
+  
   if (length(list(...)) == 0) {
-    model <- loess(concentration ~ time, data = d, span = 0.75)
+    B <- f_basis(d)
   } else {
-    model <- loess(concentration ~ time, data = d, ...)
+    B <- f_basis(d, ...)
   }
-
-  if (! is.null(new.time)) {
-    d <- data.frame(time = new.time)
-  }
-
-  fit <- as.vector(predict(model, d))
-
+ 
+  alpha <- solve(t(B) %*% B, t(B) %*% d$concentration)[,1]
+  
+  d$conc_pred <- B%*%alpha
+  
+  fit <- as.vector(d$conc_pred)
+  
   return(fit)
 }
+
 
 #========================================================================>
 # Detection function
@@ -193,7 +122,7 @@ detect_rel_bias <- function(time, concentration, metabolite, min.deviation = NUL
   # Generating fit and calculating deviations
   d <- d %>%
          group_by(metabolite) %>%
-         mutate(fit = f_smooth(time, concentration),
+         mutate(fit = fit_b_spline(time, concentration),
                 deviation = (concentration - fit) / concentration)
 
   # Identifying the timepoint with large deviation 
