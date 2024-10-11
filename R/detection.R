@@ -113,9 +113,9 @@ detect_rel_bias <- function(time, concentration, metabolite, min.deviation = NUL
   extra_args <- list(...)
 
   # Passing in extra parameters into smoothing
-  f_smooth_dply <- function(time, concentration) {
+  fit_b_spline_dply <- function(time, concentration) {
     args <- list(time = time, concentration = concentration)
-    do.call(f_smooth, c(args, extra_args))
+    do.call(fit_b_spline, c(args, extra_args))
   }
 
   # Detecting systematic deviation
