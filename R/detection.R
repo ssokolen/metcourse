@@ -131,7 +131,7 @@ detect_rel_bias <- function(time, concentration, metabolite, min.deviation = NUL
                   group_by(time, index) %>%
                   summarize(med = abs(median(deviation, na.rm = TRUE))) %>%
                   arrange(desc(med)) %>%
-                  mutate(rank = 1:n_distinct(time) 
+                  mutate(rank = 1:n_distinct(time))
   
   # Estimate threshold if not supplied by user
   if (is.null(min.deviation)) {
