@@ -86,9 +86,9 @@ fit_b_spline <- function(x, concentration, ...) {
 #'                   and \code{concentration}.
 #' @param min.deviation Smallest median relative deviation to identify as a 
 #'                      bias. If not supplied, it will be estimated as 50% of the underlying noise in the data.
-#' @param ... Arguments to be passed into \code{f_smooth}, (such as degree and number of knots). 
+#' @param ... Arguments to be passed into \code{fit_b_spline}, (such as degree and number of knots). 
 #'
-#' @return A dataframe corresponding to the time points with systematic error.
+#' @return A dataframe corresponding to the time points with and without systematic error.
 #'
 #' @examples 
 #' 
@@ -123,7 +123,7 @@ detect_rel_bias <- function(time, concentration, metabolite, min.deviation = NUL
   # Generating fit and calculating deviations
   d <- d %>%
          group_by(metabolite) %>%
-         mutate(fit = fit_b_spline(time, concentration),
+         mutate(fit = fit_b_spline_dply(time, concentration),
                 deviation = (concentration - fit) / concentration)
 
   # Identifying the timepoint with large deviation 
