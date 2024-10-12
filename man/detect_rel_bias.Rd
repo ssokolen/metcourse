@@ -21,10 +21,10 @@ and \code{concentration}.}
 \item{min.deviation}{Smallest median relative deviation to identify as a 
 bias. If not supplied, it will be estimated as 50% of the underlying noise in the data.}
 
-\item{...}{Arguments to be passed into \code{f_smooth}, (such as degree and number of knots).}
+\item{...}{Arguments to be passed into \code{fit_b_spline}, (such as degree and number of knots).}
 }
 \value{
-A dataframe corresponding to the time points with systematic error.
+A dataframe corresponding to the time points with and without systematic error.
 }
 \description{
 Identifies systematic deviations in metabolic data using a B-spline fit.

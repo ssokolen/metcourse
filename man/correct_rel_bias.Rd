@@ -4,7 +4,14 @@
 \alias{correct_rel_bias}
 \title{Correct systematic bias in metabolomic time-course data}
 \usage{
-correct_rel_bias(time, compound, concentration, min.deviation = NULL, ...)
+correct_rel_bias(
+  time,
+  compound,
+  concentration,
+  min.deviation = NULL,
+  degree = 3,
+  knots = c(0.5)
+)
 }
 \arguments{
 \item{time}{A vector of times or sample numbers for metabolite time-courses.
@@ -21,8 +28,10 @@ and \code{concentration}.}
 \item{min.deviation}{Smallest median relative deviation to identify as a 
 bias.}
 
-\item{...}{Arguments to be passed into \code{detect_rel_bias}, (such as knots
-and degree of the B-spline}
+\item{degree}{degree of the B-spline}
+
+\item{knots}{position of the knots of the B-spline as a fraction. 
+e.g. knots <- c(0.25, 0.5, 0.75)}
 }
 \value{
 A dataframe with the fit.
@@ -43,10 +52,10 @@ logic <- timecourse$sample == 4
 timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05 
 
 # Correcting
-fit <- correct_rel_bias(timecourse$time, 
+output <- correct_rel_bias(timecourse$time, 
                                          timecourse$concentration,
                                          timecourse$metabolite)
-timecourse$corrected <- fit$fit
+timecourse$corrected <- output$fit
 
 # Plotting -- the original value of the corrected point is marked in red
 par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
