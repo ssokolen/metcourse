@@ -83,7 +83,8 @@ correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL
   n.cmp <- n_distinct(d$compound)
  
   # Assign a number to each compound 
-  d$metabolite <- rep(1:n.cmp, each = n.obs) 
+  d <- d %>%
+    mutate(metabolite = as.integer(factor(compound)))
   
   #-----------------------------------------------------------------------------
   # Generate diagonal basis matrix 
