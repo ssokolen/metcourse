@@ -3,7 +3,7 @@ Title: Tools for Metabolic Time-course Data
 Version: 2.0
 Authors@R: c(
              person("Stanislav", "Sokolenko", email = "stanislav@sokolenko.net", role = c("aut", "cre")), 
-             person("Kathy", "Isaac", email = "kathy.isaac@dal.ca", role = C("aut"))
+             person("Kathy", "Isaac", email = "kathy.isaac@dal.ca", role = c("aut"))
             )
 Description: A collection of scripts for the simulation of metabolic time-course trends typical of suspension cell culture as well as the detection and correction of systematic sample bias. The methods accompany two publications titled "A comprehensive model for separating systematic bias and noise in metabolomic timecourse data -- A nonlinear B-spline mixed effect approach" and "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation".
 URL: https://github.com/ssokolen/metcourse
