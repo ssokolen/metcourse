@@ -42,7 +42,8 @@ The detection of systematic bias is performed by `detect_rel_bias`, which requir
   timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05
   error <- correct_rel_bias(timecourse$time, 
                                            timecourse$concentration,
-                                           timecourse$metabolite)
+                                           timecourse$metabolite,
+                                           degree = 2)
 ```
 # Correction
 
@@ -63,7 +64,8 @@ The correction of systematic bias is performed by `correct_rel_bias`, which requ
 
   output <- correct_rel_bias(timecourse$time,
                                            timecourse$concentration,
-                                           timecourse$metabolite)
+                                           timecourse$metabolite,
+                                           degree = 2)
   timecourse$corrected <- output$fit
 
   # Plotting -- the original value of the corrected point is marked in red
