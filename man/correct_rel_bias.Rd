@@ -54,7 +54,8 @@ timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05
 # Correcting
 output <- correct_rel_bias(timecourse$time, 
                                          timecourse$concentration,
-                                         timecourse$metabolite)
+                                         timecourse$metabolite,
+                                         degree = 2)
 timecourse$corrected <- output$fit
 
 # Plotting -- the original value of the corrected point is marked in red
