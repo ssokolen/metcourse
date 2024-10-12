@@ -1,6 +1,7 @@
 # Functions for detecting systematic bias
 
 #========================================================================>
+
 #------------------------------------------------------------------------
 #' B-spline fit
 #'
@@ -108,7 +109,7 @@ fit_b_spline <- function(x, concentration, ...) {
 detect_rel_bias <- function(time, concentration, metabolite, min.deviation = NULL, ...) {
 
   d <- data.frame(time, concentration, 
-                  metabolite, original = 1:length(time))
+                  metabolite, index = 1:length(time))
   
   extra_args <- list(...)
 
@@ -127,8 +128,10 @@ detect_rel_bias <- function(time, concentration, metabolite, min.deviation = NUL
 
   # Identifying the timepoint with large deviation 
   deviations <- d %>%
-                  group_by(time) %>%
-                  summarize(med = abs(median(deviation, na.rm = TRUE))) 
+                  group_by(time, index) %>%
+                  summarize(med = abs(median(deviation, na.rm = TRUE))) %>%
+                  arrange(desc(med)) %>%
+                  mutate(rank = 1:n_distinct(time) 
   
   # Estimate threshold if not supplied by user
   if (is.null(min.deviation)) {
