@@ -8,5 +8,6 @@ Authors@R: c(
 Description: A collection of scripts for the simulation of metabolic time-course trends typical of suspension cell culture as well as the detection and correction of systematic sample bias. The methods accompany two publications titled "A comprehensive model for separating systematic bias and noise in metabolomic timecourse data -- A nonlinear B-spline mixed effect approach" and "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation".
 URL: https://github.com/ssokolen/metcourse
 Depends: R (>= 3.2.1), dplyr (>= 0.4.2), tidyr (>= 0.2.0), mgcv (>= 1.8-6)
+Encoding: UTF-8
 License: Apache (>= 2.0)
 LazyData: true
