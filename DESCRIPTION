@@ -11,3 +11,4 @@ Depends: R (>= 3.2.1), dplyr (>= 0.4.2), tidyr (>= 0.2.0), mgcv (>= 1.8-6)
 Encoding: UTF-8
 License: Apache (>= 2.0)
 LazyData: true
+RoxygenNote: 7.3.2
