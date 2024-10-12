@@ -119,7 +119,7 @@ correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL
   # Determine number of scaling terms that can be applied
   
   n.scal <- n.obs-(degree + 1 + length(knots)) 
-  ind.scal <- deviation$index[1:min(n.scal, length(deviation$index)]
+  ind.scal <- deviation$index[1:min(n.scal, length(deviation$index))]
 
   # Checking if basis matrix is solvable
   count <- 0
