@@ -78,7 +78,7 @@ correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL
   # Organize data
   
   d <- tibble(x = time, compound = compound, y = concentration)
-  d <- d%>%
+  d <- d %>%
     arrange(compound, x)
   n.obs <- n_distinct(d$x)
   n.cmp <- n_distinct(d$compound)
@@ -96,6 +96,13 @@ correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL
 
   f_basis_deriv <- function(d) {
     B <- dbs(d$x, knots = knots*max(d$x), degree = degree, intercept = TRUE)
+  }
+
+  if (any(is.na(d$x))) {
+      stop("Input x contains NAs.")
+  }
+  if (length(unique(d$x)) < degree + length(knots) + 1) 
+      stop("Not enough unique values in x for spline fitting.")
   }
   
   bases <- d %>%
