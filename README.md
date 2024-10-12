@@ -1,6 +1,6 @@
 # metcourse
 
-`metcourse` versoon 2 provides a simple algorithm for simultaneously fitting and correcting systematic deviations in metabolomic time-courses. Specifically, it deals with the case where all metabolite concentrations are overestimated or underestimated by a constant percentage within a single sample. This can occur from inaccurate addition or processing of an internal standard as well as a result of variable solvent levels when dealing with intracellular metabolite extraction or biofluids. The correction method was validated by simulating realistic metabolic time-courses, with the simulation framework also provided in this package.
+`metcourse` version 2 provides a simple algorithm for simultaneously fitting and correcting systematic deviations in metabolomic time-courses. Specifically, it deals with the case where all metabolite concentrations are overestimated or underestimated by a constant percentage within a single sample. This can occur from inaccurate addition or processing of an internal standard as well as a result of variable solvent levels when dealing with intracellular metabolite extraction or biofluids. The correction method was validated by simulating realistic metabolic time-courses, with the simulation framework also provided in this package.
 
 More information on this version is available in the manuscript "A comprehensive model for separating systematic bias and noise in metabolomic timecourse data -- A nonlinear B-spline mixed effect approach". An older version of the software is also available based on the manuscript "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation" ([open access link](http://www.biomedcentral.com/1752-0509/9/51) - doi:10.1186/s12918-015-0197-4).
 
@@ -61,10 +61,10 @@ The correction of systematic bias is performed by `correct_rel_bias`, which requ
 
   ## The correction itself
 
-  fit <- correct_rel_bias(timecourse$time,
+  output <- correct_rel_bias(timecourse$time,
                                            timecourse$concentration,
                                            timecourse$metabolite)
-  timecourse$corrected <- fit$fit
+  timecourse$corrected <- output$fit
 
   # Plotting -- the original value of the corrected point is marked in red
   par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
