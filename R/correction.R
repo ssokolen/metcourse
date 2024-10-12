@@ -99,11 +99,11 @@ correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL
   }
   
   bases <- d %>%
-    split(d$metabolite) %>%
+    split(d$compound) %>%
     map(f_basis)
   
   bases.deriv <- d %>%
-    split(d$metabolite) %>%
+    split(d$compound) %>%
     map(f_basis_deriv)
   
   B <- as.matrix(bdiagMat(bases))
