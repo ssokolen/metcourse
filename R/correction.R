@@ -123,7 +123,7 @@ correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL
 
   # Checking if basis matrix is solvable
   count <- 0
-  for (k in 1:min(n.scal, length(deviation$index)) {
+  for (k in 1:min(n.scal, length(deviation$index))) {
     X <- B[1:n.obs, 1:(degree+1+length(knots))]
     X0 <- X
     actual <- svd(X0)
