@@ -24,8 +24,10 @@
 #'                   and \code{concentration}.
 #' @param min.deviation Smallest median relative deviation to identify as a 
 #'                      bias.
-#' @param ... Arguments to be passed into \code{detect_rel_bias}, (such as knots
-#'            and degree of the B-spline
+#' @param degree degree of the B-spline
+#' @param knots position of the knots of the B-spline as a fraction. 
+#'              e.g. knots <- c(0.25, 0.5, 0.75)
+#'            
 #
 #' @return A dataframe with the fit.
 #'
@@ -39,10 +41,10 @@
 #' timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05 
 #'
 #' # Correcting
-#' fit <- correct_rel_bias(timecourse$time, 
+#' output <- correct_rel_bias(timecourse$time, 
 #'                                          timecourse$concentration,
 #'                                          timecourse$metabolite)
-#' timecourse$corrected <- fit$fit
+#' timecourse$corrected <- output$fit
 #'
 #' # Plotting -- the original value of the corrected point is marked in red
 #' par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
@@ -70,7 +72,7 @@
 #'       ylab = 'Concentration (mM)', outer = TRUE, line = 3)
 #' @export
 
-correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL, ...) { 
+correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL, degree = 3, knots = c(0.5) { 
   #-----------------------------------------------------------------------------
   # Organize data
   
@@ -79,10 +81,7 @@ correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL
     arrange(compound, x)
   n.obs <- n_distinct(d$x)
   n.cmp <- n_distinct(d$compound)
-  if (length(list(...)) == 0) {
-    degree <- 3
-    knots <- c(0.5)
-  }
+ 
   # Assign a number to each compound 
   d$metabolite <- rep(1:n.cmp, each = n.obs) 
   
@@ -111,7 +110,7 @@ correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL
   #-----------------------------------------------------------------------------
   # Calculate median deviation
   
-  deviation <- detect_rel_bias(d$x, d$concentration, d$metabolite, min.deviation, ...)
+  deviation <- detect_rel_bias(d$x, d$concentration, d$metabolite, min.deviation, degree = degree, knots = knots)
   deviation <- deviation %>%
     filter(error == TRUE)
 
