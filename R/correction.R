@@ -72,7 +72,7 @@
 #'       ylab = 'Concentration (mM)', outer = TRUE, line = 3)
 #' @export
 
-correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL, degree = 3, knots = c(0.5) { 
+correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL, degree = 3, knots = c(0.5)) { 
   #-----------------------------------------------------------------------------
   # Organize data
   
