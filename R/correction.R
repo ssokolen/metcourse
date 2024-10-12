@@ -101,7 +101,7 @@ correct_rel_bias <- function(time, compound, concentration, min.deviation = NULL
   if (any(is.na(d$x))) {
       stop("Input x contains NAs.")
   }
-  if (length(unique(d$x)) < degree + length(knots) + 1) 
+  if (length(unique(d$x)) < degree + length(knots) + 1) {
       stop("Not enough unique values in x for spline fitting.")
   }
   
