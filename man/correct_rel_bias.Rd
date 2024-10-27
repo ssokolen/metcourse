@@ -6,8 +6,8 @@
 \usage{
 correct_rel_bias(
   time,
-  compound,
   concentration,
+  compound,
   min.deviation = NULL,
   degree = 3,
   knots = c(0.5)
@@ -15,22 +15,22 @@ correct_rel_bias(
 }
 \arguments{
 \item{time}{A vector of times or sample numbers for metabolite time-courses.
-Note, there should be a time value for every \code{concentration} 
-for every \code{compound} e.g. time = c(1, 2, 3, 1, 2, 3), 
-concentration = c(20, 15, 10, 3, 6, 9), 
+Note, there should be a time value for every \code{concentration}
+for every \code{compound} e.g. time = c(1, 2, 3, 1, 2, 3),
+concentration = c(20, 15, 10, 3, 6, 9),
 compound = c('glc', 'glc', 'glc', 'lac', 'lac', 'lac').}
+
+\item{concentration}{A vector of metabolite concentrations.}
 
 \item{compound}{A vector of metabolite names that correspond to \code{time}
 and \code{concentration}.}
 
-\item{concentration}{A vector of metabolite concentrations.}
-
-\item{min.deviation}{Smallest median relative deviation to identify as a 
+\item{min.deviation}{Smallest median relative deviation to identify as a
 bias.}
 
 \item{degree}{degree of the B-spline}
 
-\item{knots}{position of the knots of the B-spline as a fraction. 
+\item{knots}{position of the knots of the B-spline as a fraction.
 e.g. knots <- c(0.25, 0.5, 0.75)}
 }
 \value{
@@ -49,10 +49,10 @@ data(timecourse)
 
 # Adding an error of 5\% at sample 4
 logic <- timecourse$sample == 4
-timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05 
+timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05
 
 # Correcting
-output <- correct_rel_bias(timecourse$time, 
+output <- correct_rel_bias(timecourse$time,
                                          timecourse$concentration,
                                          timecourse$metabolite,
                                          degree = 2)
@@ -60,26 +60,22 @@ timecourse$corrected <- output$fit
 
 # Plotting -- the original value of the corrected point is marked in red
 par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
-new.time <- seq(min(timecourse$time), max(timecourse$time), length.out=100)
 
 for (metabolite in unique(timecourse$metabolite)) {
 
   logic <- timecourse$metabolite == metabolite
   d <- timecourse[logic, ]
-  
+
   logic2 <- d$concentration != d$corrected
 
-  plot(d$time, d$corrected, pch = 16, xlab = '', ylab = '',  
+  plot(d$time, d$corrected, pch = 16, xlab = '', ylab = '',
        ylim = c(min(d$concentration), max(d$concentration)))
 
-  smoothed <- met_smooth_gam(d$time, d$corrected,
-                             new.time = new.time, k = 5)
-  lines(new.time, smoothed)
 
   points(d$time[logic2], d$concentration[logic2], pch = 16, col = 'red')
 
 }
 
-title(xlab = 'Time post inoculation (hours)', 
+title(xlab = 'Time post inoculation (hours)',
       ylab = 'Concentration (mM)', outer = TRUE, line = 3)
 }

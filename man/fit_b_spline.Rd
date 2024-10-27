@@ -9,9 +9,9 @@ fit_b_spline(x, concentration, ...)
 \arguments{
 \item{concentration}{Metabolite concentration.}
 
-\item{...}{Arguments to be passed into the bSpline() function, 
+\item{...}{Arguments to be passed into the bSpline() function,
 such as knots -- "The internal breakpoints that define the spline"
-and degree -- "Non-negative integer degree of the piecewise polynomial". If no additional arguments are provided, a reasonable 
+and degree -- "Non-negative integer degree of the piecewise polynomial". If no additional arguments are provided, a reasonable
 default for is assumed.}
 
 \item{time}{Time or sample number for metabolite time-course.}
@@ -31,18 +31,18 @@ concentration <- as.numeric(simulate_concave(1, 10, par))
 concentration <- concentration * 18 + 2
 abs.sd <- mean(concentration) * 0.1
 concentration <- concentration + rnorm(10, 0, abs.sd)
-concentration[concentration < 0] <- 0 
+concentration[concentration < 0] <- 0
 
 # Original sample time
 time <- seq(0, 9, length.out=10) * 24
 
 
 # Fitting
-fit <- fit_b_spline(time, concentration, 
+fit <- fit_b_spline(time, concentration,
                               knots = c(0.5), degree = 2)
 
 # Plotting
-plot(time, concentration, type='p', 
+plot(time, concentration, type='p',
      xlab='Time post inoculation (hours)', ylab='Concentration (mM)')
 lines(time, fit, type='l')
 }
