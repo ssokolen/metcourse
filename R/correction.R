@@ -45,7 +45,7 @@
 #'                                          timecourse$concentration,
 #'                                          timecourse$metabolite,
 #'                                          degree = 2)
-#' timecourse$corrected <- output$fit[, 1]
+#' timecourse$corrected <- output$fit
 #'
 #' # Plotting -- black represents the corrected fit and red represents the original data
 #' par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
