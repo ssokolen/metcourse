@@ -31,7 +31,7 @@ install_github('ssokolen/metcourse')
 # Detection
 The detection of systematic bias is performed by `detect_rel_bias`, which requires only three arguments -- time or sample number, metabolite concentration, and a column of metabolites or compounds corresponding to each concentration. 
 ```R
-  ## Generating a set of metabolic trends to perform correction
+  ## Generating a set of metabolic trends to detect systematic errors
  
   # Using previously simulated data 40 metabolic trends with 10 time points
   # (see Simulation section below and the `simulate_timecourse` example)
