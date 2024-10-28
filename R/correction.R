@@ -45,9 +45,9 @@
 #'                                          timecourse$concentration,
 #'                                          timecourse$metabolite,
 #'                                          degree = 2)
-#' timecourse$corrected <- output$fit
+#' timecourse$corrected <- output$fit[, 1]
 #'
-#' # Plotting -- the original value of the corrected point is marked in red
+#' # Plotting -- black represents the corrected fit and red represents the original data
 #' par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
 #'
 #' for (metabolite in unique(timecourse$metabolite)) {
@@ -60,7 +60,7 @@
 #'   plot(d$time, d$corrected, pch = 16, xlab = '', ylab = '',
 #'        ylim = c(min(d$concentration), max(d$concentration)))
 #'
-#'
+#'   lines(d$time, d$corrected)
 #'   points(d$time[logic2], d$concentration[logic2], pch = 16, col = 'red')
 #'
 #' }

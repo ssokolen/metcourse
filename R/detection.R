@@ -100,7 +100,7 @@ fit_b_spline <- function(x, concentration, ...) {
 #' timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05
 #'
 #' # Estimating
-#' error <- correct_rel_bias(timecourse$time,
+#' error <- detect_rel_bias(timecourse$time,
 #'                                          timecourse$concentration,
 #'                                          timecourse$metabolite)
 #'

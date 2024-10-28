@@ -40,7 +40,7 @@ The detection of systematic bias is performed by `detect_rel_bias`, which requir
   # Artificially adding an error of 5% at sample 4
   logic <- timecourse$sample == 4
   timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05
-  error <- correct_rel_bias(timecourse$time, 
+  error <- detect_rel_bias(timecourse$time, 
                                            timecourse$concentration,
                                            timecourse$metabolite,
                                            degree = 2)
@@ -66,11 +66,11 @@ The correction of systematic bias is performed by `correct_rel_bias`, which requ
                                            timecourse$concentration,
                                            timecourse$metabolite,
                                            degree = 2)
-  timecourse$corrected <- output$fit
+  timecourse$corrected <- output$fit[,1]
 
-  # Plotting -- the original value of the corrected point is marked in red
+  # Plotting -- black represents the corrected fit and red represents the original data
+
   par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
-  new.time <- seq(min(timecourse$time), max(timecourse$time), length.out=100)
 
   for (metabolite in unique(timecourse$metabolite)) {
 
@@ -82,10 +82,7 @@ The correction of systematic bias is performed by `correct_rel_bias`, which requ
     plot(d$time, d$corrected, pch = 16, xlab = '', ylab = '',
     ylim = c(min(d$concentration), max(d$concentration)))
 
-    smoothed <- met_smooth_gam(d$time, d$corrected,
-    new.time = new.time, k = 4)
-    lines(new.time, smoothed)
-
+    lines(d$time, d$corrected)
     points(d$time[logic2], d$concentration[logic2], pch = 16, col = 'red')
   }
 
