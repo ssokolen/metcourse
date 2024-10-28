@@ -173,7 +173,7 @@ correct_rel_bias <- function(time, concentration, compound, min.deviation = NULL
   for (i in ind.scal) {
       scal[i] <- 1
   }
-  print(scal)
+  
   #-----------------------------------------------------------------------------
   # Model fit
 
