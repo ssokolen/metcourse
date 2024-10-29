@@ -28,26 +28,9 @@ install_github('ssokolen/metcourse')
   4. [Measurement error](#measurement-error)
   5. [Putting it all together](#putting-it-all-together)
 
-# Detection
-The detection of systematic bias is performed by `detect_rel_bias`, which requires only three arguments -- time or sample number, metabolite concentration, and a column of metabolites or compounds corresponding to each concentration. 
-```R
-  ## Generating a set of metabolic trends to detect systematic errors
- 
-  # Using previously simulated data 40 metabolic trends with 10 time points
-  # (see Simulation section below and the `simulate_timecourse` example)
-  data(timecourse)
-
-  # Artificially adding an error of 5% at sample 4
-  logic <- timecourse$sample == 4
-  timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05
-  error <- detect_rel_bias(timecourse$time, 
-                                           timecourse$concentration,
-                                           timecourse$metabolite,
-                                           degree = 2)
-```
 # Correction
 
-The correction of systematic bias is performed by `correct_rel_bias`, which requires only three arguments -- time or sample number, metabolite concentration, and a column of metabolites or compounds corresponding to each concentration. 
+The simultaneous detection and correction of systematic bias is performed by `correct_rel_bias`, which requires only three arguments -- time or sample number, metabolite concentration, and a column of metabolites or compounds corresponding to each concentration. 
 
 ```R
   ## Generating a set of metabolic trends to perform correction
