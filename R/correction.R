@@ -29,7 +29,7 @@
 #'              e.g. knots <- c(0.25, 0.5, 0.75)
 #'
 #
-#' @return A dataframe with the fit.
+#' @return A dataframe with the corrected fit.
 #'
 #' @examples
 #'
