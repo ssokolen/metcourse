@@ -6,7 +6,7 @@ More information on this version is available in the manuscript "A comprehensive
 
 # Original code
 
-Following submission of the manuscript, the original scripts were refactored into this package with some changes to enhance usability. The original code is still available under "R/original" in the form of "Additional files" mentioned throughout the manuscript. 
+Following submission of the manuscript, "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation" ([open access link](http://www.biomedcentral.com/1752-0509/9/51) - doi:10.1186/s12918-015-0197-4), the original scripts were refactored into this package with some changes to enhance usability. The original code is still available under "R/original" in the form of "Additional files" mentioned throughout the manuscript. 
 
 # Installation
 
