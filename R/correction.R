@@ -1,258 +1,239 @@
 # Functions for correcting systematic bias
-
 #========================================================================>
-# Smoothing functions used for correction
 
-#------------------------------------------------------------------------
-#' GAM smoothing
-#'
-#' Wraps GAM smoothing function for use in bias correction algorithm.
-#'
-#' @param time Time or sample number for metabolite time-course.
-#' @param concentration Metabolite concentration.
-#' @param new.time Optional vector for new independent variables.
-#' @param warn The \code{gam} function uses internal warning suppression that
-#'             doesn't appear to work when used in conjunction with dplyr.
-#'             All warning messages are suppressed by default here. Set to
-#'             TRUE to unsuppress.
-#' @param ... Arguments to be passed into the s() smoothing function, such as
-#'            k -- the dimension of the basis used to represent the smooth term.
-#'            If no additional arguments are provided, a reasonable default
-#'            for k (5) is assumed.
-#
-#' @return A vector of smoothed concentrations.
-#'
-#' @examples
-#' # Simulating concave curve with 10 points
-#' par <- c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9)
-#' concentration <- as.numeric(simulate_concave(1, 10, par))
-#' 
-#' # Adding noise and changing scale
-#' concentration <- concentration * 18 + 2
-#' abs.sd <- mean(concentration) * 0.1
-#' concentration <- concentration + rnorm(10, 0, abs.sd)
-#' concentration[concentration < 0] <- 0 
-#' 
-#' # Original sampling time
-#' time <- seq(0, 9, length.out=10) * 24
-#'
-#' # New time for smoothing
-#' new.time <- seq(0, 9, length.out=100) * 24
-#' 
-#' # Smoothing
-#' corrected <- met_smooth_gam(time, concentration, new.time = new.time, k = 5)
-#' 
-#' # Plotting
-#' plot(time, concentration, type='p', 
-#'      xlab='Time post inoculation (hours)', ylab='Concentration (mM)')
-#' lines(new.time, corrected, type='l')
-#' @export
-met_smooth_gam <- function(time, concentration, new.time = NULL,
-                           warn = FALSE, ...) {
-  
-  d <- data.frame(time = time, concentration = concentration)
 
-  if (warn) {
-    f_gam <- function(...) gam(...)
-  } else {
-    f_gam <- function(...) suppressWarnings(gam(...))
-  }
 
-  if (length(list(...)) == 0) {
-    model <- f_gam(concentration ~ s(time, bs='cr', k = 5), data = d)
-  } else {
-    model <- f_gam(concentration ~ s(time, bs='cr', ...), data = d)
-  }
-
-  if (! is.null(new.time)) {
-    d <- data.frame(time = new.time)
-  }
-
-  fit <- as.vector(predict(model, d))
-
-  return(fit)
-}
-
-#------------------------------------------------------------------------
-#' LOESS smoothing
-#'
-#' Wraps LOESS smoothing function for use in bias correction algorithm. 
-#' WARNING: LOESS is not a particularly good choice for bias correction. 
-#' This function is included for completeness only.
-#'
-#' @param time Time or sample number for metabolite time-course.
-#' @param concentration Metabolite concentration.
-#' @param new.time Optional vector for new independent variables.
-#' @param ... Arguments to be passed into the loess() smoothing function, 
-#'            such as span -- "the parameter alpha which controls the degree of
-#'            smoothing". If no additional arguments are provided, a reasonable 
-#'            default for span (0.75) is assumed.
-#
-#' @return A vector of smoothed concentrations.
-#'
-#' @examples
-#' # Simulating concave curve with 10 points
-#' par <- c(3.5, 4.5, 2.5, 3.5, 0.0, 0.2, 0.8, 0.9)
-#' concentration <- as.numeric(simulate_concave(1, 10, par))
-#' 
-#' # Adding noise and changing scale
-#' concentration <- concentration * 18 + 2
-#' abs.sd <- mean(concentration) * 0.1
-#' concentration <- concentration + rnorm(10, 0, abs.sd)
-#' concentration[concentration < 0] <- 0 
-#' 
-#' # Original sample time
-#' time <- seq(0, 9, length.out=10) * 24
-#'
-#' # New time for smoothing
-#' new.time <- seq(0, 9, length.out=100) * 24
-#' 
-#' # Smoothing
-#' corrected <- met_smooth_loess(time, concentration, 
-#'                               new.time = new.time, span = 0.75)
-#' 
-#' # Plotting
-#' plot(time, concentration, type='p', 
-#'      xlab='Time post inoculation (hours)', ylab='Concentration (mM)')
-#' lines(new.time, corrected, type='l')
-#' @export
-met_smooth_loess <- function(time, concentration, new.time = NULL, ...) {
-  
-  d <- data.frame(time = time, concentration = concentration)
-
-  if (length(list(...)) == 0) {
-    model <- loess(concentration ~ time, data = d, span = 0.75)
-  } else {
-    model <- loess(concentration ~ time, data = d, ...)
-  }
-
-  if (! is.null(new.time)) {
-    d <- data.frame(time = new.time)
-  }
-
-  fit <- as.vector(predict(model, d))
-
-  return(fit)
-}
-
-#========================================================================>
+#-----------------------------------------------------------------------
 # Correction function
 
 #------------------------------------------------------------------------
 #' Correct systematic bias in metabolomic time-course data
 #'
-#' Identifies systematic deviations in metabolic data using a smoothing fit.
-#' Timepoints that have a median relative deviation above a threshold value
+#' Identifies systematic deviations in metabolic data using a spline fit.
+#' Timepoints that have a median relative deviation above a min.deviation value
 #' are assumed to be influenced by a measurement or methodological bias as
 #' compared to the overall trends metabolite concentrations.
 #'
 #' @param time A vector of times or sample numbers for metabolite time-courses.
-#'             Note, there should be a time value for every \code{concentration} 
-#'             for every \code{metabolite} e.g. time = c(1, 2, 3, 1, 2, 3), 
-#'             concentration = c(20, 15, 10, 3, 6, 9), 
-#'             metabolite = c('glc', 'glc', 'glc', 'lac', 'lac', 'lac'). 
+#'             Note, there should be a time value for every \code{concentration}
+#'             for every \code{compound} e.g. time = c(1, 2, 3, 1, 2, 3),
+#'             concentration = c(20, 15, 10, 3, 6, 9),
+#'             compound = c('glc', 'glc', 'glc', 'lac', 'lac', 'lac').
 #' @param concentration A vector of metabolite concentrations.
-#' @param metabolite A vector of metabolite names that correspond to \code{time}
+#' @param compound A vector of metabolite names that correspond to \code{time}
 #'                   and \code{concentration}.
-#' @param f_smooth Smoothing function (set to met_smooth_gam by default).
-#' @param max.iter The algorithm correct the single most deviating point at one
-#'                 time (as it may influence the identification of other
-#'                 deviations). \code{max.iter} controls the maximum number
-#'                 of correction passes.
-#' @param min.deviation Smallest median relative deviation to identify as a 
-#'                      bias. 0.02 has been found to be a good default for
-#'                      a diverse set of metabolic time-courses from
-#'                      higher eukaryote cell culture.
-#' @param ... Arguments to be passed into \code{f_smooth}, (such as k or
-#'            span parameters for met_smooth_gam and met_smooth_loess
-#'            respectively). 
+#' @param min.deviation Smallest median relative deviation to identify as a
+#'                      bias.
+#' @param degree degree of the B-spline
+#' @param knots position of the knots of the B-spline as a fraction.
+#'              e.g. knots <- c(0.25, 0.5, 0.75)
+#'
 #
-#' @return A vector of corrected concentrations.
+#' @return A dataframe with the corrected fit.
 #'
 #' @examples
-#' 
+#'
 #' # Using previously simulated data 40 metabolic trends with 10 time points
 #' data(timecourse)
 #'
 #' # Adding an error of 5% at sample 4
 #' logic <- timecourse$sample == 4
-#' timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05 
+#' timecourse$concentration[logic] <- timecourse$concentration[logic] * 1.05
 #'
 #' # Correcting
-#' timecourse$corrected <- correct_rel_bias(timecourse$time, 
+#' output <- correct_rel_bias(timecourse$time,
 #'                                          timecourse$concentration,
-#'                                          timecourse$metabolite)
+#'                                          timecourse$metabolite,
+#'                                          degree = 2)
+#' timecourse$corrected <- output$fit
 #'
-#'
-#' # Plotting -- the original value of the corrected point is marked in red
+#' # Plotting -- black represents the corrected fit and red represents the original data
 #' par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
-#' new.time <- seq(min(timecourse$time), max(timecourse$time), length.out=100)
-#' 
+#'
 #' for (metabolite in unique(timecourse$metabolite)) {
 #'
 #'   logic <- timecourse$metabolite == metabolite
 #'   d <- timecourse[logic, ]
-#'   
+#'
 #'   logic2 <- d$concentration != d$corrected
 #'
-#'   plot(d$time, d$corrected, pch = 16, xlab = '', ylab = '',  
+#'   plot(d$time, d$corrected, pch = 16, xlab = '', ylab = '',
 #'        ylim = c(min(d$concentration), max(d$concentration)))
 #'
-#'   smoothed <- met_smooth_gam(d$time, d$corrected,
-#'                              new.time = new.time, k = 5)
-#'   lines(new.time, smoothed)
-#'
+#'   lines(d$time, d$corrected)
 #'   points(d$time[logic2], d$concentration[logic2], pch = 16, col = 'red')
 #'
 #' }
 #'
-#' title(xlab = 'Time post inoculation (hours)', 
+#' title(xlab = 'Time post inoculation (hours)',
 #'       ylab = 'Concentration (mM)', outer = TRUE, line = 3)
 #' @export
-correct_rel_bias <- function(time, concentration, metabolite,
-                             f_smooth = met_smooth_gam, 
-                             max.iter = 20, min.deviation = 0.02, ...) {
 
-  # Generating data frame, with a new "corrected" column
-  d <- data.frame(time, concentration, corrected = concentration, 
-                  metabolite, original = 1:length(time))
-  
-  extra_args <- list(...)
+correct_rel_bias <- function(time, concentration, compound, min.deviation = NULL, degree = 3, knots = c(0.5)) {
+  #-----------------------------------------------------------------------------
+  # Organize data
 
-  # Passing in extra parameters into smoothing
-  f_smooth_dply <- function(time, corrected) {
-    args <- list(time = time, corrected = corrected)
-    do.call(f_smooth, c(args, extra_args))
-  }
-  
-  # Iteratively correcting systematic deviation
-  for (i in 1:max.iter) {
+  d <- tibble(x = time, compound = compound, y = concentration)
+  d <- d %>%
+    arrange(compound, x)
+  n.obs <- n_distinct(d$x)
+  n.cmp <- n_distinct(d$compound)
 
-    # Generating fit and calculating deviations
-    d <- d %>%
-           group_by(metabolite) %>%
-           mutate(fit = f_smooth(time, corrected),
-                  deviation = (corrected - fit) / corrected)
+  # Assign a number to each compound
+  d <- d %>%
+    mutate(metabolite = as.integer(factor(compound)))
 
-    # Identifying the timepoint with largest deviation 
-    deviations <- d %>%
-                    group_by(time) %>%
-                    summarize(med = abs(median(deviation, na.rm = TRUE))) %>%
-                    arrange(desc(med))
+  #-----------------------------------------------------------------------------
+  # Generate diagonal basis matrix
 
-    if (deviations$med[1] < min.deviation) break
-
-    max_dev_time <- deviations$time[1]
-   
-    logic <- d$time == max_dev_time
-    d[logic, ] <- within(d[logic, ], {
-      corrected <- corrected - median(deviation) * corrected
-    })
+  f_basis <- function(d) {
+    B <- bSpline(d$x, knots = knots*max(d$x), degree = degree, intercept = TRUE)
   }
 
-  # Correcting any changes in order
-  out <- d$corrected[order(d$original)]
+  f_basis_deriv <- function(d) {
+    B <- dbs(d$x, knots = knots*max(d$x), degree = degree, intercept = TRUE)
+  }
+
+  if (n_distinct(d$x) < degree + length(knots) + 1) {
+      stop("Not enough unique values in x for spline fitting.")
+  }
+
+  bases <- d %>%
+    split(d$compound) %>%
+    map(f_basis)
+
+  bases.deriv <- d %>%
+    split(d$compound) %>%
+    map(f_basis_deriv)
+
+  B <- as.matrix(bdiagMat(bases))
+  dB <- as.matrix(bdiagMat(bases.deriv))
+
+  #-----------------------------------------------------------------------------
+  # Calculate median deviation
+
+  deviation <- detect_rel_bias(d$x, d$y, d$metabolite, min.deviation, degree = degree, knots = knots)
+  deviation <- deviation %>%
+    filter(error == TRUE)
+
+  #-----------------------------------------------------------------------------
+  # Determine number of scaling terms that can be applied
+
+  n.scal <- n.obs-(degree + 1 + length(knots))
+  ind.scal <- deviation$index[1:min(n.scal, length(deviation$index))]
+
+  if (any(ind.scal < 1 | ind.scal > n.obs)) {
+    warning("Out of bounds indices detected in ind.scal")
+  }
+
+  # Checking if basis matrix is solvable
+  count <- 0
+  for (k in 1:min(n.scal, length(deviation$index))) {
+    X <- B[1:n.obs, 1:(degree+1+length(knots))]
+    X0 <- X
+    actual <- svd(X0)
+    actual <- actual$d
+    min.actual <- min(actual)
+    X <- X[-ind.scal, ]
+    check <- svd(X)
+    check <- check$d
+
+    if (min(check) < 0.5*min.actual) {
+      ind.scal <- ind.scal[1:(length(ind.scal)-1)]
+      count <- count + 1
+    }
+    else {
+      break
+    }
+  }
+
+  # Add terms (except the last one removed) back to check if solvable
+  n.s <- length(ind.scal)
+  c <- count - 1
+  if (c > 0) {
+    for (p in 1:c) {
+      val <- deviation$index[(n.s+1+p)]
+      ind.scal.store <- append(ind.scal, val)
+      X <- B[1:n.obs, 1:(degree+1+length(knots))]
+      X <- X[-ind.scal.store, ]
+      check <- svd(X)
+      check <- check$d
+      if (min(check) > 0.5*min.actual) {
+        ind.scal <- ind.scal.store
+        count <- count - 1
+      }
+    }
+  }
+  # Ensure number of terms scaled doesn't exceed the degrees of freedom
+  if (length(ind.scal) > n.scal) {
+    ind.scal <- ind.scal[1:n.scal]
+  }
+
+  scal <- rep(0, n.obs)
+  for (i in ind.scal) {
+      scal[i] <- 1
+  }
   
-  return(out)
+  #-----------------------------------------------------------------------------
+  # Model fit
+
+  # Parameters
+  n <- nrow(d)
+  nb <- n.cmp*(degree + 1 + length(knots))
+  d$time <- rep(1:n.obs, n.cmp)
+  d$y[is.na(d$y)] <- 0
+
+  input <- list(
+    n = n,
+    nt = n.obs,
+    scal = scal,
+    sample = d$time,
+    nb = nb,
+    nc = n.cmp,
+    compound = d$metabolite,
+    B = B,
+    y = d$y
+  )
+
+  fit <- stan(file = system.file("stan", "scaled_bias_function.stan", package = "metcourse"),
+              data = input , iter = 4000, control = list(max_treedepth = 10))
+
+  #-----------------------------------------------------------------------------
+  # Process output parameters
+  print(fit)
+  print(class(fit))
+  print(class(summary(fit)))
+  par <- rstan::summary(fit)$summary[,"mean"]
+
+  # B-spline parameters
+  alpha.s <- par[1:nb]
+  alpha.s <- unlist(alpha.s, use.names = FALSE)
+  alpha.s <- matrix(alpha.s, nrow = nb)
+
+  # Bias estimate
+  bias.est <- par[(nb+n.obs+n.cmp+1):(nb+n.cmp+2*n.obs)]
+  bias.est <- unlist(bias.est, use.names = FALSE)
+
+  # Confidence intervals for bias estimate
+  par.lower <- rstan::summary(fit)$summary[,"2.5%"]
+  bias.est.2.5 <- par.lower[(nb+n.obs+n.cmp+1):(nb+n.cmp+2*n.obs)]
+  bias.est.2.5 <- unlist(bias.est.2.5, use.names = FALSE)
+
+  par.upper <- rstan::summary(fit)$summary[,"97.5%"]
+  bias.est.97.5 <- par.upper[(nb+n.obs+n.cmp+1):(nb+n.cmp+2*n.obs)]
+  bias.est.97.5 <- unlist(bias.est.97.5, use.names = FALSE)
+
+  d$bias.est <- rep(bias.est, n.cmp)
+  d$bias.est.2.5 <- rep(bias.est.2.5, n.cmp)
+  d$bias.est.97.5 <- rep(bias.est.97.5, n.cmp)
+
+  # Model fit
+  d$fit <- B%*%alpha.s
+  d$derivative <- dB%*%alpha.s
+
+  print(d$fit)
+
+  # Output
+  return(d)
 }
 

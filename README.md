@@ -1,12 +1,12 @@
 # metcourse
 
-`metcourse` provides a simple algorithm for correcting systematic deviations in metabolomic time-courses. Specifically, it deals with the case where all metabolite concentrations are overestimated or underestimated by a constant percentage within a single sample. This can occur from inaccurate addition or processing of an internal standard as well as a result of variable solvent levels when dealing with intracellular metabolite extraction or biofluids. The correction method was validated by simulating realistic metabolic time-courses, with the simulation framework also provided in this package.
+`metcourse` version 2 provides a simple algorithm for simultaneously fitting and correcting systematic deviations in metabolomic time-courses. Specifically, it deals with the case where all metabolite concentrations are overestimated or underestimated by a constant percentage within a single sample. This can occur from inaccurate addition or processing of an internal standard as well as a result of variable solvent levels when dealing with intracellular metabolite extraction or biofluids. The correction method was validated by simulating realistic metabolic time-courses, with the simulation framework also provided in this package.
 
-More information is available in the manuscript "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation" ([open access link](http://www.biomedcentral.com/1752-0509/9/51) - doi:10.1186/s12918-015-0197-4).
+More information on this version is available in the manuscript "A comprehensive model for separating systematic bias and noise in metabolomic timecourse data -- A nonlinear B-spline mixed effect approach". An older version of the software is also available based on the manuscript "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation" ([open access link](http://www.biomedcentral.com/1752-0509/9/51) - doi:10.1186/s12918-015-0197-4).
 
 # Original code
 
-Following submission of the manuscript, the original scripts were refactored into this package with some changes to enhance usability. The original code is still available under "R/original" in the form of "Additional files" mentioned throughout the manuscript. 
+Following submission of the manuscript, "A correction method for systematic error in 1H-NMR time-course data validated through stochastic cell culture simulation" ([open access link](http://www.biomedcentral.com/1752-0509/9/51) - doi:10.1186/s12918-015-0197-4), the original scripts were refactored into this package with some changes to enhance usability. The original code is still available under "R/original" in the form of "Additional files" mentioned throughout the manuscript. 
 
 # Installation
 
@@ -19,8 +19,9 @@ install_github('ssokolen/metcourse')
 
 # Table of contents
 
-1. [Correction](#correction)
-2. [Simulation](#metabolite-time-course-simulation)
+1. [Detection](#detection)
+2. [Correction](#correction)
+3. [Simulation](#metabolite-time-course-simulation)
   1. [Trend shape](#trend-shape)
   2. [Maximum concentrations](#maximum-concentrations)
   3. [Minimum concentrations](#minimum-concentrations)
@@ -29,7 +30,7 @@ install_github('ssokolen/metcourse')
 
 # Correction
 
-The correction of systematic bias is performed by `correct_rel_bias`, which requires only three arguments -- time or sample number, metabolite concentration, and a column of metabolites corresponding to each concentration. We have found that the cubic regression spline smooth provided by the `mgcv` package yielded the best results (with a basis dimension, k, of 5) and this smooth is used by default. Custom smoothing functions can also be defined (see `met_smooth_gam` and `met_smooth_loess`).
+The simultaneous detection and correction of systematic bias is performed by `correct_rel_bias`, which requires only three arguments -- time or sample number, metabolite concentration, and a column of metabolites or compounds corresponding to each concentration. 
 
 ```R
   ## Generating a set of metabolic trends to perform correction
@@ -44,32 +45,15 @@ The correction of systematic bias is performed by `correct_rel_bias`, which requ
 
   ## The correction itself
 
-  timecourse$corrected <- correct_rel_bias(timecourse$time,
+  output <- correct_rel_bias(timecourse$time,
                                            timecourse$concentration,
-                                           timecourse$metabolite)
+                                           timecourse$metabolite,
+                                           degree = 2)
+  timecourse$corrected <- output$fit
 
-  # f_smooth argument can be used to set any smoothing function that takes
-  # an input of concentrations and returns corrected values.
-  # met_smooth_loess and met_smooth_gam have been provided as simple wrappers
-  # to gam and loess.
+  # Plotting -- black represents the corrected fit and red represents the original data
 
-  # span is passed on to loess
-  timecourse$corrected_loess <- correct_rel_bias(timecourse$time,
-                                                 timecourse$concentration,
-                                                 timecourse$metabolite,
-                                                 f_smooth = met_smooth_loess,
-                                                 span = 0.75)
-
-  # k is passed on to gam
-  timecourse$corrected_loess <- correct_rel_bias(timecourse$time,
-                                                 timecourse$concentration,
-                                                 timecourse$metabolite,
-                                                 f_smooth = met_smooth_gam,
-                                                 k = 5)
-
-  # Plotting -- the original value of the corrected point is marked in red
   par(mfrow = c(8, 5), oma = c(5, 4, 1, 1) + 0.1, mar = c(1, 1, 1, 1) + 0.1)
-  new.time <- seq(min(timecourse$time), max(timecourse$time), length.out=100)
 
   for (metabolite in unique(timecourse$metabolite)) {
 
@@ -81,10 +65,7 @@ The correction of systematic bias is performed by `correct_rel_bias`, which requ
     plot(d$time, d$corrected, pch = 16, xlab = '', ylab = '',
     ylim = c(min(d$concentration), max(d$concentration)))
 
-    smoothed <- met_smooth_gam(d$time, d$corrected,
-    new.time = new.time, k = 4)
-    lines(new.time, smoothed)
-
+    lines(d$time, d$corrected)
     points(d$time[logic2], d$concentration[logic2], pch = 16, col = 'red')
   }
 
